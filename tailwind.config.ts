@@ -88,10 +88,15 @@ export default {
             height: '0',
           },
         },
+        'winner-reveal': {
+          '0%': { opacity: '0', transform: 'scale(0.8) translateY(20px)' },
+          '100%': { opacity: '1', transform: 'scale(1) translateY(0px)' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
+        'winner-reveal': 'winner-reveal 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards',
       },
     },
   },
