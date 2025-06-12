@@ -1,6 +1,7 @@
+
 "use client";
 
-import * as _React from "react"; // Avoid conflict with React namespace
+import * as _React from "react"; 
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -73,9 +74,10 @@ export default function KudosRafflePage() {
       const newWinner = rafflePool[randomIndex];
       setWinner(newWinner);
       setIsDrawing(false);
+      setRafflePool([]); // Clear the raffle pool
       toast({
         title: "Winner Selected!",
-        description: `Congratulations to ${newWinner.name}!`,
+        description: `Congratulations to ${newWinner.name}! The raffle pool has been cleared.`,
         duration: 5000, 
       });
     }, 2500);
