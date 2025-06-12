@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Employee } from "@/types/employee";
@@ -7,6 +8,7 @@ import {
   Select,
   SelectContent,
   SelectItem,
+  SelectSeparator,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -42,10 +44,20 @@ export function EmployeeSelector({ availableEmployees, onAddEmployee }: Employee
         </SelectTrigger>
         <SelectContent>
           {availableEmployees.length > 0 ? (
-            availableEmployees.map((employee) => (
-              <SelectItem key={employee.id} value={employee.id}>
-                {employee.name}
-              </SelectItem>
+            availableEmployees.map((employee, index) => (
+              <React.Fragment key={employee.id}>
+                <SelectItem value={employee.id}>
+                  {employee.name}
+                </SelectItem>
+                {/* Add a separator after the 3rd item, if there are more items after it */}
+                {index === 2 && index < availableEmployees.length - 1 && (
+                  <SelectSeparator />
+                )}
+                {/* Add a separator after the 6th item, if there are more items after it */}
+                {index === 5 && index < availableEmployees.length - 1 && (
+                  <SelectSeparator />
+                )}
+              </React.Fragment>
             ))
           ) : (
             <SelectItem value="none" disabled>
