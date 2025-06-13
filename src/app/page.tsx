@@ -24,7 +24,7 @@ const MOCK_EMPLOYEES: Employee[] = [
   { id: '10', name: 'Julia Child' },
 ];
 
-export default function KudosRafflePage() {
+export default function RafflePage() {
   const [allEmployees, setAllEmployees] = _React.useState<Employee[]>(MOCK_EMPLOYEES);
   const [rafflePool, setRafflePool] = _React.useState<Employee[]>([]);
   const [winner, setWinner] = _React.useState<Employee | null>(null);
@@ -91,13 +91,13 @@ export default function KudosRafflePage() {
     <div className="min-h-screen bg-background text-foreground flex flex-col items-center py-8 sm:py-10 px-4 font-body">
       <header className="mb-8 sm:mb-10 text-center">
         <Image 
-          src="/dhl-logo.svg" 
-          alt="DHL Logo" 
-          width={150} 
-          height={45} 
-          className="mx-auto mb-4"
+          src="/raffle-tickets.png" 
+          alt="Raffle Tickets" 
+          width={180} 
+          height={180} 
+          className="mx-auto mb-4 rounded-full shadow-md"
           priority
-          data-ai-hint="company logo"
+          data-ai-hint="raffle tickets"
         />
         <h1 className="text-3xl sm:text-4xl font-headline font-bold">
           <span className="text-accent">DHL</span> <span className="text-primary">Raffle</span>
