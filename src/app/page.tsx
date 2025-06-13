@@ -101,19 +101,19 @@ export default function RafflePage() {
       {/* Content Container */}
       <div className="relative z-10 flex flex-col items-center py-8 sm:py-10 px-4">
         <header className="mb-8 sm:mb-10 text-center">
-          <div className="bg-card/90 backdrop-blur-md p-4 sm:p-6 rounded-lg shadow-xl border border-white/20">
+          <div className="bg-card/90 backdrop-blur-md py-3 px-4 sm:py-4 sm:px-6 rounded-lg shadow-xl border border-white/20">
             <Image
               src="/dhl-logo.png"
               alt="DHL Logo"
-              width={200}
-              height={60}
-              className="mx-auto mb-4"
+              width={350}
+              height={105}
+              className="mx-auto mb-2"
               priority
             />
             <h1 className="text-3xl sm:text-4xl font-headline font-bold">
-              <span className="text-accent">DHL</span> <span className="text-primary">Raffle</span>
+              <span className="text-primary">Raffle</span>
             </h1>
-            <p className="text-muted-foreground mt-1 sm:mt-2">Recognizing our outstanding employees</p>
+            <p className="text-muted-foreground mt-1">Recognizing our outstanding employees</p>
           </div>
         </header>
 
