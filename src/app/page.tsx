@@ -1,7 +1,7 @@
 
 "use client";
 
-import * as _React from "react";
+import * as _React from "react"; // Avoid conflict with React namespace
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
