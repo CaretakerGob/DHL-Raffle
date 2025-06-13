@@ -75,13 +75,13 @@ export default function RafflePage() {
       const newWinner = rafflePool[randomIndex];
       setWinner(newWinner);
       setIsDrawing(false);
-      setRafflePool([]);
+      setRafflePool([]); // Clear the pool after drawing
       toast({
         title: "Winner Selected!",
         description: `Congratulations to ${newWinner.name}! The raffle pool has been cleared.`,
         duration: 5000,
       });
-    }, 2500);
+    }, 2500); // Simulate drawing time
   };
 
   const availableToAdEmployees = _allEmployees.filter(
@@ -90,17 +90,20 @@ export default function RafflePage() {
 
   return (
     <div className="relative min-h-screen text-foreground">
+      {/* Background Image Container */}
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat bg-fixed"
         style={{ backgroundImage: "url('/BG.png')" }}
       />
-      <div className="absolute inset-0 bg-background/50" /> {/* Overlay */}
+      {/* Overlay for background image transparency */}
+      <div className="absolute inset-0 bg-background/50" /> {/* Adjust opacity as needed */}
 
+      {/* Content Container */}
       <div className="relative z-10 flex flex-col items-center py-8 sm:py-10 px-4">
         <header className="mb-8 sm:mb-10 text-center">
           <div className="bg-card/90 backdrop-blur-md p-4 sm:p-6 rounded-lg shadow-xl border border-white/20">
             <Image
-              src="/dhl-logo.svg"
+              src="/dhl-logo.png"
               alt="DHL Logo"
               width={200}
               height={60}
