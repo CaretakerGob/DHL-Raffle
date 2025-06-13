@@ -92,7 +92,7 @@ export default function RafflePage() {
       style={{ backgroundImage: "url('/BG.png')" }}
     >
       <header className="mb-8 sm:mb-10 text-center">
-        <div className="bg-card/70 backdrop-blur-md p-4 sm:p-6 rounded-lg shadow-xl border border-white/20">
+        <div className="bg-card/60 backdrop-blur-md p-4 sm:p-6 rounded-lg shadow-xl border border-white/20">
           <Image 
             src="/dhl-logo.svg" 
             alt="DHL Logo" 
@@ -109,7 +109,7 @@ export default function RafflePage() {
       </header>
 
       <main className="w-full max-w-xl space-y-6 sm:space-y-8">
-        <Card className="shadow-lg bg-card/85 backdrop-blur-sm border border-white/10">
+        <Card className="shadow-lg bg-card/75 backdrop-blur-sm border border-white/10">
           <CardHeader>
             <CardTitle className="text-xl sm:text-2xl text-center sm:text-left">Add Employees to Raffle</CardTitle>
           </CardHeader>
@@ -121,7 +121,7 @@ export default function RafflePage() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-lg bg-card/85 backdrop-blur-sm border border-white/10">
+        <Card className="shadow-lg bg-card/75 backdrop-blur-sm border border-white/10">
           <CardHeader>
             <CardTitle className="text-xl sm:text-2xl text-center sm:text-left">
               Raffle Pool ({rafflePool.length} participant{rafflePool.length === 1 ? '' : 's'})
@@ -147,7 +147,7 @@ export default function RafflePage() {
         </div>
 
         {isDrawing && (
-          <div className="mt-8 sm:mt-12 text-center text-2xl font-semibold text-primary bg-card/70 backdrop-blur-md p-4 rounded-lg shadow-md animate-pulse border border-white/20">
+          <div className="mt-8 sm:mt-12 text-center text-2xl font-semibold text-primary bg-card/60 backdrop-blur-md p-4 rounded-lg shadow-md animate-pulse border border-white/20">
             Picking a winner... Good luck!
           </div>
         )}
@@ -159,7 +159,7 @@ export default function RafflePage() {
         )}
       </main>
 
-      <footer className="mt-10 sm:mt-16 text-center text-sm text-muted-foreground bg-card/70 backdrop-blur-md p-3 rounded-lg shadow-md border border-white/20">
+      <footer className="mt-10 sm:mt-16 text-center text-sm text-muted-foreground bg-card/60 backdrop-blur-md p-3 rounded-lg shadow-md border border-white/20">
         <p>&copy; {new Date().getFullYear()} DHL. All rights reserved.</p>
       </footer>
     </div>
