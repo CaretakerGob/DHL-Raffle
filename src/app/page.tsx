@@ -100,7 +100,7 @@ export default function RafflePage() {
         <header className="mb-8 sm:mb-10 flex justify-center">
           <div className="bg-card/90 backdrop-blur-sm py-2 px-3 rounded-lg shadow-xl border border-white/20 flex flex-col items-center">
             <Image
-              src="/dhl-logo.png"
+              src="/DHL-raffle-Logo.png"
               alt="DHL Raffle Logo"
               width={350}
               height={105}
