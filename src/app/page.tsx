@@ -2,6 +2,7 @@
 "use client";
 
 import * as _React from "react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmployeeSelector } from "@/components/employee-selector";
@@ -93,6 +94,14 @@ export default function RafflePage() {
     >
       <header className="mb-8 sm:mb-10 text-center">
         <div className="bg-card/70 backdrop-blur-md p-4 sm:p-6 rounded-lg shadow-xl border border-white/20">
+          <Image 
+            src="/dhl-logo.png" 
+            alt="DHL Logo" 
+            width={200} 
+            height={60} 
+            className="mx-auto mb-4"
+            priority
+          />
           <h1 className="text-3xl sm:text-4xl font-headline font-bold">
             <span className="text-accent">DHL</span> <span className="text-primary">Raffle</span>
           </h1>
