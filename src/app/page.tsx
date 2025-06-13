@@ -2,7 +2,6 @@
 "use client";
 
 import * as _React from "react";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmployeeSelector } from "@/components/employee-selector";
@@ -88,25 +87,21 @@ export default function RafflePage() {
   );
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col items-center py-8 sm:py-10 px-4 font-body">
+    <div 
+      className="min-h-screen text-foreground flex flex-col items-center py-8 sm:py-10 px-4 font-body bg-cover bg-center bg-no-repeat bg-fixed" 
+      style={{ backgroundImage: "url('/raffle-tickets.png')" }}
+    >
       <header className="mb-8 sm:mb-10 text-center">
-        <Image 
-          src="/raffle-tickets.png" 
-          alt="Raffle Tickets" 
-          width={180} 
-          height={180} 
-          className="mx-auto mb-4 rounded-full shadow-md"
-          priority
-          data-ai-hint="raffle tickets"
-        />
-        <h1 className="text-3xl sm:text-4xl font-headline font-bold">
-          <span className="text-accent">DHL</span> <span className="text-primary">Raffle</span>
-        </h1>
-        <p className="text-muted-foreground mt-1 sm:mt-2">Recognizing our outstanding employees</p>
+        <div className="bg-card/80 backdrop-blur-sm p-4 sm:p-6 rounded-lg shadow-xl">
+          <h1 className="text-3xl sm:text-4xl font-headline font-bold">
+            <span className="text-accent">DHL</span> <span className="text-primary">Raffle</span>
+          </h1>
+          <p className="text-muted-foreground mt-1 sm:mt-2">Recognizing our outstanding employees</p>
+        </div>
       </header>
 
       <main className="w-full max-w-xl space-y-6 sm:space-y-8">
-        <Card className="shadow-lg">
+        <Card className="shadow-lg bg-card/95 backdrop-blur-sm">
           <CardHeader>
             <CardTitle className="text-xl sm:text-2xl text-center sm:text-left">Add Employees to Raffle</CardTitle>
           </CardHeader>
@@ -118,7 +113,7 @@ export default function RafflePage() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-lg">
+        <Card className="shadow-lg bg-card/95 backdrop-blur-sm">
           <CardHeader>
             <CardTitle className="text-xl sm:text-2xl text-center sm:text-left">
               Raffle Pool ({rafflePool.length} participant{rafflePool.length === 1 ? '' : 's'})
@@ -144,7 +139,7 @@ export default function RafflePage() {
         </div>
 
         {isDrawing && (
-          <div className="mt-8 sm:mt-12 text-center text-2xl font-semibold text-primary animate-pulse">
+          <div className="mt-8 sm:mt-12 text-center text-2xl font-semibold text-primary bg-card/80 backdrop-blur-sm p-4 rounded-lg shadow-md animate-pulse">
             Picking a winner... Good luck!
           </div>
         )}
@@ -156,7 +151,7 @@ export default function RafflePage() {
         )}
       </main>
 
-      <footer className="mt-10 sm:mt-16 text-center text-sm text-muted-foreground">
+      <footer className="mt-10 sm:mt-16 text-center text-sm text-muted-foreground bg-card/80 backdrop-blur-sm p-3 rounded-lg shadow-md">
         <p>&copy; {new Date().getFullYear()} DHL. All rights reserved.</p>
       </footer>
     </div>
