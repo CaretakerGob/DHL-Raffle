@@ -96,7 +96,7 @@ export default function RafflePage() {
       />
       <div className="absolute inset-0 bg-background/50" /> 
 
-      <div className="relative z-10 flex flex-col items-center py-8 sm:py-10 px-4">
+      <div className="relative z-10 flex flex-col items-center py-16 sm:py-20 px-4">
         <header className="mb-8 sm:mb-10 flex justify-center">
           <div className="bg-card/90 backdrop-blur-sm py-2 px-3 rounded-lg shadow-xl border border-white/20 flex flex-col items-center">
             <Image
