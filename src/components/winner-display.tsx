@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Employee } from "@/types/employee";
@@ -15,20 +16,20 @@ export function WinnerDisplay({ winner }: WinnerDisplayProps) {
   }
 
   return (
-    <Card className="bg-primary text-primary-foreground shadow-xl animate-winner-reveal border-2 border-primary-foreground/20">
+    <Card className="bg-card/90 backdrop-blur-md text-card-foreground shadow-xl animate-winner-reveal border border-white/20">
       <CardHeader className="text-center pt-6 pb-2">
-        <CardDescription className="text-xl text-primary-foreground/90 font-medium">
+        <CardDescription className="text-xl text-card-foreground/90 font-medium">
           And the DHL Raffle winner is...
         </CardDescription>
       </CardHeader>
       <CardContent className="text-center pb-6">
         <div className="flex items-center justify-center my-4">
-          <Trophy className="h-16 w-16 text-primary-foreground drop-shadow-lg" strokeWidth={1.5} />
+          <Trophy className="h-16 w-16 text-accent drop-shadow-lg" strokeWidth={1.5} />
         </div>
         <CardTitle className="text-5xl font-bold">
           {winner.name}
         </CardTitle>
-        <p className="text-lg mt-2 text-primary-foreground/90">Congratulations!</p>
+        <p className="text-lg mt-2 text-card-foreground/90">Congratulations!</p>
       </CardContent>
     </Card>
   );

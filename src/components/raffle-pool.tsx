@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Employee } from "@/types/employee";
@@ -23,9 +24,9 @@ export function RafflePool({ pooledEmployees, onRemoveEmployee }: RafflePoolProp
   return (
     <div className="max-h-60 overflow-y-auto pr-2 space-y-2">
       {pooledEmployees.map((employee) => (
-        <Card key={employee.id} className="bg-secondary shadow-sm">
+        <Card key={employee.id} className="bg-card shadow-sm">
           <CardContent className="p-3 flex items-center justify-between">
-            <span className="text-secondary-foreground">{employee.name}</span>
+            <span className="text-card-foreground">{employee.name}</span>
             <Button
               variant="ghost"
               size="icon"

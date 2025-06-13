@@ -118,9 +118,9 @@ export default function RafflePage() {
         </header>
 
         <main className="w-full max-w-xl space-y-6 sm:space-y-8">
-          <Card className="shadow-lg bg-secondary border border-primary/30">
+          <Card className="shadow-lg bg-card/90 backdrop-blur-md border border-white/20">
             <CardHeader>
-              <CardTitle className="text-xl sm:text-2xl text-center sm:text-left text-primary">Add Employees to Raffle</CardTitle>
+              <CardTitle className="text-xl sm:text-2xl text-center sm:text-left">Add Employees to Raffle</CardTitle>
             </CardHeader>
             <CardContent>
               <EmployeeSelector
@@ -130,9 +130,9 @@ export default function RafflePage() {
             </CardContent>
           </Card>
 
-          <Card className="shadow-lg bg-secondary border border-primary/30">
+          <Card className="shadow-lg bg-card/90 backdrop-blur-md border border-white/20">
             <CardHeader>
-              <CardTitle className="text-xl sm:text-2xl text-center sm:text-left text-primary">
+              <CardTitle className="text-xl sm:text-2xl text-center sm:text-left">
                 Raffle Pool ({rafflePool.length} participant{rafflePool.length === 1 ? '' : 's'})
               </CardTitle>
             </CardHeader>
@@ -156,7 +156,7 @@ export default function RafflePage() {
           </div>
 
           {isDrawing && (
-            <div className="mt-8 sm:mt-12 text-center text-2xl font-semibold text-primary bg-card/90 backdrop-blur-md p-4 rounded-lg shadow-md animate-pulse border border-white/20">
+            <div className="mt-8 sm:mt-12 text-center text-2xl font-semibold bg-card/90 backdrop-blur-md p-4 rounded-lg shadow-md animate-pulse border border-white/20">
               Picking a winner... Good luck!
             </div>
           )}
