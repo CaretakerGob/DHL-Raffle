@@ -89,7 +89,7 @@ export default function RafflePage() {
   return (
     <div 
       className="min-h-screen text-foreground flex flex-col items-center py-8 sm:py-10 px-4 font-body bg-cover bg-center bg-no-repeat bg-fixed" 
-      style={{ backgroundImage: "url('/colorful-blob-background.png')" }}
+      style={{ backgroundImage: "url('/sunburst-background.png')" }}
     >
       <header className="mb-8 sm:mb-10 text-center">
         <div className="bg-card/70 backdrop-blur-md p-4 sm:p-6 rounded-lg shadow-xl border border-white/20">
@@ -165,3 +165,4 @@ export default function RafflePage() {
     </div>
   );
 }
+
