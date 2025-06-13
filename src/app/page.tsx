@@ -9,7 +9,6 @@ import { RafflePool } from "@/components/raffle-pool";
 import { WinnerDisplay } from "@/components/winner-display";
 import type { Employee } from "@/types/employee";
 import { useToast } from "@/hooks/use-toast";
-import Image from "next/image";
 
 const MOCK_EMPLOYEES_DATA: Employee[] = [
   { id: '1', name: 'Alice Wonderland' },
@@ -74,7 +73,7 @@ export default function RafflePage() {
       const newWinner = rafflePool[randomIndex];
       setWinner(newWinner);
       setIsDrawing(false);
-      setRafflePool([]); // Clear the raffle pool
+      setRafflePool([]); 
       toast({
         title: "Winner Selected!",
         description: `Congratulations to ${newWinner.name}! The raffle pool has been cleared.`,
