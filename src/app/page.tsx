@@ -1,7 +1,7 @@
 
 "use client";
 
-import * as _React from "react"; 
+import * as _React from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -63,7 +63,7 @@ export default function RafflePage() {
     }
 
     setIsDrawing(true);
-    setWinner(null); 
+    setWinner(null);
 
     toast({
       title: "Drawing Winner...",
@@ -75,11 +75,11 @@ export default function RafflePage() {
       const newWinner = rafflePool[randomIndex];
       setWinner(newWinner);
       setIsDrawing(false);
-      setRafflePool([]); 
+      setRafflePool([]);
       toast({
         title: "Winner Selected!",
         description: `Congratulations to ${newWinner.name}! The raffle pool has been cleared.`,
-        duration: 5000, 
+        duration: 5000,
       });
     }, 2500);
   };
@@ -90,20 +90,20 @@ export default function RafflePage() {
 
   return (
     <div className="relative min-h-screen text-foreground">
-      <div 
+      <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat bg-fixed"
         style={{ backgroundImage: "url('/BG.png')" }}
       />
       <div className="absolute inset-0 bg-background/50" /> {/* Overlay */}
-      
+
       <div className="relative z-10 flex flex-col items-center py-8 sm:py-10 px-4">
         <header className="mb-8 sm:mb-10 text-center">
           <div className="bg-card/90 backdrop-blur-md p-4 sm:p-6 rounded-lg shadow-xl border border-white/20">
-            <Image 
-              src="/dhl-logo.svg" 
-              alt="DHL Logo" 
-              width={200} 
-              height={60} 
+            <Image
+              src="/dhl-logo.svg"
+              alt="DHL Logo"
+              width={200}
+              height={60}
               className="mx-auto mb-4"
               priority
             />
@@ -157,7 +157,7 @@ export default function RafflePage() {
               Picking a winner... Good luck!
             </div>
           )}
-          
+
           {!isDrawing && winner && (
             <div className="mt-8 sm:mt-12">
               <WinnerDisplay winner={winner} />
