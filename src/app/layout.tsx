@@ -3,7 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
-  title: 'DHL Kudos Raffle',
+  title: 'DHL Raffle',
   description: 'Employee recognition raffle application for DHL',
 };
 

@@ -1,7 +1,7 @@
 
 "use client";
 
-import * as _React from "react"; 
+import * as _React from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -100,7 +100,7 @@ export default function KudosRafflePage() {
           data-ai-hint="company logo"
         />
         <h1 className="text-3xl sm:text-4xl font-headline font-bold">
-          <span className="text-accent">DHL</span> <span className="text-primary">Kudos Raffle</span>
+          <span className="text-accent">DHL</span> <span className="text-primary">Raffle</span>
         </h1>
         <p className="text-muted-foreground mt-1 sm:mt-2">Recognizing our outstanding employees</p>
       </header>

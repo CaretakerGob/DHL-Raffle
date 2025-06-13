@@ -18,7 +18,7 @@ export function WinnerDisplay({ winner }: WinnerDisplayProps) {
     <Card className="bg-primary text-primary-foreground shadow-xl animate-winner-reveal border-2 border-primary-foreground/20">
       <CardHeader className="text-center pt-6 pb-2">
         <CardDescription className="text-xl text-primary-foreground/90 font-medium">
-          And the DHL Kudos Raffle winner is...
+          And the DHL Raffle winner is...
         </CardDescription>
       </CardHeader>
       <CardContent className="text-center pb-6">
