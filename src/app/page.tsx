@@ -1,7 +1,7 @@
 
 "use client";
 
-import * as _React from "react"; // Avoid conflict with React namespace
+import * as _React from "react"; 
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -68,7 +68,6 @@ export default function RafflePage() {
       description: "Get ready to find out who the lucky employee is!",
     });
 
-    // Simulate drawing time
     setTimeout(() => {
       const randomIndex = Math.floor(Math.random() * rafflePool.length);
       const newWinner = rafflePool[randomIndex];
@@ -95,7 +94,7 @@ export default function RafflePage() {
       <header className="mb-8 sm:mb-10 text-center">
         <div className="bg-card/70 backdrop-blur-md p-4 sm:p-6 rounded-lg shadow-xl border border-white/20">
           <Image 
-            src="/dhl-logo.png" 
+            src="/dhl-logo.svg" 
             alt="DHL Logo" 
             width={200} 
             height={60} 
