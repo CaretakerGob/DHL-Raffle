@@ -10,6 +10,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { UserPlus, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -32,7 +39,16 @@ export function EmployeeSelector({ availableEmployees, onAddEmployee }: Employee
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const term = e.target.value;
     setSearchTerm(term);
-    setStagedEmployee(null); 
+    
+    // If typing clears the input, also clear staged employee
+    if (term === "") {
+      setStagedEmployee(null);
+    } else {
+       // If current search term doesn't match staged employee name, clear staged employee
+      if (stagedEmployee && stagedEmployee.name.toLowerCase() !== term.toLowerCase()) {
+        setStagedEmployee(null);
+      }
+    }
 
     if (term.length > 0) {
       setIsPopoverOpen(true);
@@ -45,7 +61,18 @@ export function EmployeeSelector({ availableEmployees, onAddEmployee }: Employee
     setStagedEmployee(employee);
     setSearchTerm(employee.name); 
     setIsPopoverOpen(false); 
-    // Consider focusing the "Add to Raffle" button or inputRef.current?.focus();
+  };
+
+  const handleDropdownSelect = (employeeId: string) => {
+    if (!employeeId) {
+      setStagedEmployee(null);
+      setSearchTerm(""); // Clear search term if dropdown is cleared
+      return;
+    }
+    const employee = availableEmployees.find(emp => emp.id === employeeId);
+    if (employee) {
+      handleEmployeeSelect(employee);
+    }
   };
 
   const handleAdd = () => {
@@ -63,10 +90,7 @@ export function EmployeeSelector({ availableEmployees, onAddEmployee }: Employee
   };
   
   React.useEffect(() => {
-    // If popover is open but search term is cleared or no longer yields results, close it.
     if (isPopoverOpen && (searchTerm.length === 0 || (searchTerm.length > 0 && filteredEmployees.length === 0 && availableEmployees.length > 0))) {
-        // If there are no available employees at all, the message "All employees are..." will show, so keep it open.
-        // This condition is mainly for when typing leads to no specific matches.
         if (availableEmployees.length > 0 && filteredEmployees.length === 0) {
              // Keep popover open to show "No matches"
         } else if (searchTerm.length === 0) {
@@ -77,7 +101,7 @@ export function EmployeeSelector({ availableEmployees, onAddEmployee }: Employee
 
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
         <PopoverTrigger asChild>
           <div className="relative">
@@ -85,11 +109,11 @@ export function EmployeeSelector({ availableEmployees, onAddEmployee }: Employee
             <Input
               ref={inputRef}
               type="search"
-              placeholder="Search and select an employee..."
+              placeholder="Search or select an employee..."
               value={searchTerm}
               onChange={handleInputChange}
               onClick={() => {
-                if (searchTerm.length > 0 && availableEmployees.length > 0) {
+                if (searchTerm.length > 0 && availableEmployees.length > 0 && filteredEmployees.length > 0) {
                   setIsPopoverOpen(true);
                 }
               }}
@@ -105,18 +129,14 @@ export function EmployeeSelector({ availableEmployees, onAddEmployee }: Employee
           className="w-[--radix-popover-trigger-width] p-0"
           align="start"
           onOpenAutoFocus={(e) => {
-            e.preventDefault(); 
+            // e.preventDefault(); // Keep focus on input
           }}
         >
           {(() => {
-            // This content is only shown when isPopoverOpen is true.
-            // isPopoverOpen becomes true if searchTerm has text.
-            if (searchTerm.length === 0) return null; // Should not happen if popover open logic is correct
-
+            if (searchTerm.length === 0) return null; 
             if (availableEmployees.length === 0) {
               return <p className="p-3 text-sm text-muted-foreground">All employees are already in the raffle pool.</p>;
             }
-
             if (filteredEmployees.length > 0) {
               return (
                 <div role="listbox" className="max-h-60 overflow-y-auto py-1">
@@ -136,17 +156,42 @@ export function EmployeeSelector({ availableEmployees, onAddEmployee }: Employee
                 </div>
               );
             }
-            
-            // searchTerm.length > 0, availableEmployees.length > 0, but filteredEmployees.length === 0
             return <p className="p-3 text-sm text-muted-foreground">No employees match your search.</p>;
           })()}
         </PopoverContent>
       </Popover>
 
+      <div className="flex items-center text-xs text-muted-foreground uppercase">
+        <div className="flex-grow border-t border-muted"></div>
+        <span className="mx-2">Or</span>
+        <div className="flex-grow border-t border-muted"></div>
+      </div>
+
+      <Select
+        onValueChange={handleDropdownSelect}
+        value={stagedEmployee?.id ?? ""}
+        disabled={availableEmployees.length === 0}
+      >
+        <SelectTrigger className="w-full">
+          <SelectValue placeholder="Select an employee directly..." />
+        </SelectTrigger>
+        <SelectContent>
+          {availableEmployees.length === 0 && !searchTerm ? (
+             <SelectItem value="no-employees" disabled>All employees are in the pool.</SelectItem>
+          ) : (
+            availableEmployees.map(employee => (
+              <SelectItem key={employee.id} value={employee.id}>
+                {employee.name}
+              </SelectItem>
+            ))
+          )}
+        </SelectContent>
+      </Select>
+
       <Button 
         onClick={handleAdd} 
         disabled={!stagedEmployee || availableEmployees.length === 0} 
-        className="w-full"
+        className="w-full mt-4" // Added mt-4 for spacing
       >
         <UserPlus className="mr-2 h-4 w-4" /> Add to Raffle
       </Button>
