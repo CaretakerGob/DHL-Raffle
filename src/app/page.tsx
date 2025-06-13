@@ -25,14 +25,14 @@ const MOCK_EMPLOYEES: Employee[] = [
 ];
 
 export default function RafflePage() {
-  const [allEmployees, setAllEmployees] = _React.useState<Employee[]>(MOCK_EMPLOYEES);
+  const [_allEmployees, setAllEmployees] = _React.useState<Employee[]>(MOCK_EMPLOYEES);
   const [rafflePool, setRafflePool] = _React.useState<Employee[]>([]);
   const [winner, setWinner] = _React.useState<Employee | null>(null);
   const [isDrawing, setIsDrawing] = _React.useState<boolean>(false);
   const { toast } = useToast();
 
   const handleAddEmployee = (employeeId: string) => {
-    const employeeToAdd = allEmployees.find((emp) => emp.id === employeeId);
+    const employeeToAdd = _allEmployees.find((emp) => emp.id === employeeId);
     if (employeeToAdd && !rafflePool.find((emp) => emp.id === employeeId)) {
       setRafflePool((prevPool) => [...prevPool, employeeToAdd]);
     }
@@ -83,7 +83,7 @@ export default function RafflePage() {
     }, 2500);
   };
 
-  const availableToAdEmployees = allEmployees.filter(
+  const availableToAdEmployees = _allEmployees.filter(
     (emp) => !rafflePool.find((pEmp) => pEmp.id === emp.id)
   );
 
