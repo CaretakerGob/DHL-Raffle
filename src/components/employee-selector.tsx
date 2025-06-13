@@ -36,15 +36,17 @@ export function EmployeeSelector({ availableEmployees, onAddEmployee }: Employee
     employee.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const sortedAvailableEmployees = React.useMemo(() => {
+    return [...availableEmployees].sort((a, b) => a.name.localeCompare(b.name));
+  }, [availableEmployees]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const term = e.target.value;
     setSearchTerm(term);
     
-    // If typing clears the input, also clear staged employee
     if (term === "") {
       setStagedEmployee(null);
     } else {
-       // If current search term doesn't match staged employee name, clear staged employee
       if (stagedEmployee && stagedEmployee.name.toLowerCase() !== term.toLowerCase()) {
         setStagedEmployee(null);
       }
@@ -66,7 +68,7 @@ export function EmployeeSelector({ availableEmployees, onAddEmployee }: Employee
   const handleDropdownSelect = (employeeId: string) => {
     if (!employeeId) {
       setStagedEmployee(null);
-      setSearchTerm(""); // Clear search term if dropdown is cleared
+      setSearchTerm(""); 
       return;
     }
     const employee = availableEmployees.find(emp => emp.id === employeeId);
@@ -170,16 +172,16 @@ export function EmployeeSelector({ availableEmployees, onAddEmployee }: Employee
       <Select
         onValueChange={handleDropdownSelect}
         value={stagedEmployee?.id ?? ""}
-        disabled={availableEmployees.length === 0}
+        disabled={sortedAvailableEmployees.length === 0}
       >
         <SelectTrigger className="w-full">
           <SelectValue placeholder="Select an employee directly..." />
         </SelectTrigger>
         <SelectContent>
-          {availableEmployees.length === 0 && !searchTerm ? (
+          {sortedAvailableEmployees.length === 0 && !searchTerm ? (
              <SelectItem value="no-employees" disabled>All employees are in the pool.</SelectItem>
           ) : (
-            availableEmployees.map(employee => (
+            sortedAvailableEmployees.map(employee => (
               <SelectItem key={employee.id} value={employee.id}>
                 {employee.name}
               </SelectItem>
@@ -191,7 +193,7 @@ export function EmployeeSelector({ availableEmployees, onAddEmployee }: Employee
       <Button 
         onClick={handleAdd} 
         disabled={!stagedEmployee || availableEmployees.length === 0} 
-        className="w-full mt-4" // Added mt-4 for spacing
+        className="w-full mt-4"
       >
         <UserPlus className="mr-2 h-4 w-4" /> Add to Raffle
       </Button>
