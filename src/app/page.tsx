@@ -9,8 +9,9 @@ import { RafflePool } from "@/components/raffle-pool";
 import { WinnerDisplay } from "@/components/winner-display";
 import type { Employee } from "@/types/employee";
 import { useToast } from "@/hooks/use-toast";
+import Image from "next/image";
 
-const MOCK_EMPLOYEES: Employee[] = [
+const MOCK_EMPLOYEES_DATA: Employee[] = [
   { id: '1', name: 'Alice Wonderland' },
   { id: '2', name: 'Bob The Builder' },
   { id: '3', name: 'Charlie Brown' },
@@ -24,7 +25,7 @@ const MOCK_EMPLOYEES: Employee[] = [
 ];
 
 export default function RafflePage() {
-  const [_allEmployees, setAllEmployees] = _React.useState<Employee[]>(MOCK_EMPLOYEES);
+  const [_allEmployees, setAllEmployees] = _React.useState<Employee[]>(MOCK_EMPLOYEES_DATA);
   const [rafflePool, setRafflePool] = _React.useState<Employee[]>([]);
   const [winner, setWinner] = _React.useState<Employee | null>(null);
   const [isDrawing, setIsDrawing] = _React.useState<boolean>(false);
