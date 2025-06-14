@@ -5,12 +5,20 @@ import * as _React from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { EmployeeSelector } from "@/components/employee-selector";
 import { RafflePool } from "@/components/raffle-pool";
 import { WinnerDisplay } from "@/components/winner-display";
-import { Confetti } from "@/components/confetti"; // Import Confetti
+import { Confetti } from "@/components/confetti";
 import type { Employee } from "@/types/employee";
 import { useToast } from "@/hooks/use-toast";
+import { Trophy } from "lucide-react";
 
 const MOCK_EMPLOYEES_DATA: Employee[] = [
   { id: '1', name: 'Alice Wonderland' },
@@ -32,17 +40,15 @@ export default function RafflePage() {
   const [rafflePool, setRafflePool] = _React.useState<Employee[]>([]);
   const [winner, setWinner] = _React.useState<Employee | null>(null);
   const [isDrawing, setIsDrawing] = _React.useState<boolean>(false);
-  const [showConfetti, setShowConfetti] = _React.useState<boolean>(false); // State for confetti
+  const [showConfetti, setShowConfetti] = _React.useState<boolean>(false);
+  const [showWinnerModal, setShowWinnerModal] = _React.useState<boolean>(false);
+  const modalTimerRef = _React.useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
 
   const handleAddEmployee = (employeeId: string) => {
     const employeeToAdd = _allEmployees.find((emp) => emp.id === employeeId);
     if (employeeToAdd && !rafflePool.find((emp) => emp.id === employeeId)) {
       setRafflePool((prevPool) => [...prevPool, employeeToAdd]);
-       toast({
-        title: "Employee Added",
-        description: `${employeeToAdd.name} has been added to the raffle.`,
-      });
     }
   };
 
@@ -70,7 +76,11 @@ export default function RafflePage() {
 
     setIsDrawing(true);
     setWinner(null);
-    setShowConfetti(false); // Ensure confetti is reset if re-drawing quickly
+    setShowWinnerModal(false);
+    if (modalTimerRef.current) {
+      clearTimeout(modalTimerRef.current);
+    }
+    setShowConfetti(false);
 
     toast({
       title: "Drawing Winner...",
@@ -81,22 +91,33 @@ export default function RafflePage() {
       const randomIndex = Math.floor(Math.random() * rafflePool.length);
       const newWinner = rafflePool[randomIndex];
       setWinner(newWinner);
-      setShowConfetti(true); // Trigger confetti
+      setShowWinnerModal(true);
+      setShowConfetti(true);
       setIsDrawing(false);
-      setRafflePool([]); 
+      setRafflePool([]);
       toast({
         title: "Winner Selected!",
         description: `Congratulations to ${newWinner.name}! The raffle pool has been cleared.`,
         duration: 5000,
       });
 
-      // Hide confetti after a delay to allow re-triggering
+      modalTimerRef.current = setTimeout(() => {
+        setShowWinnerModal(false);
+      }, 7000);
+
       setTimeout(() => {
         setShowConfetti(false);
-      }, 6000); // Duration should be longer than confetti animation (3s + 1.5s delay) + buffer
-
-    }, 2500); 
+      }, 6000);
+    }, 2500);
   };
+
+  _React.useEffect(() => {
+    return () => {
+      if (modalTimerRef.current) {
+        clearTimeout(modalTimerRef.current);
+      }
+    };
+  }, []);
 
   const availableToAdEmployees = _allEmployees.filter(
     (emp) => !rafflePool.find((pEmp) => pEmp.id === emp.id)
@@ -104,12 +125,12 @@ export default function RafflePage() {
 
   return (
     <div className="relative min-h-screen text-foreground">
-      <Confetti active={showConfetti} count={150} /> {/* Add Confetti component */}
+      <Confetti active={showConfetti} count={150} />
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat bg-fixed"
         style={{ backgroundImage: "url('/BG.png')" }}
       />
-      <div className="absolute inset-0 bg-background/50" /> 
+      <div className="absolute inset-0 bg-background/50" />
 
       <div className="relative z-10 flex flex-col items-center py-20 sm:py-24 px-4">
         <header className="mb-8 sm:mb-10 flex flex-col items-center">
@@ -168,7 +189,23 @@ export default function RafflePage() {
             </div>
           )}
 
-          {!isDrawing && winner && (
+          <Dialog open={showWinnerModal} onOpenChange={setShowWinnerModal}>
+            <DialogContent className="sm:max-w-md bg-card/95 backdrop-blur-xl border-white/20 text-center p-6 rounded-xl shadow-2xl">
+              <DialogHeader className="pt-4">
+                <div className="flex items-center justify-center mb-4 animate-winner-reveal">
+                  <Trophy className="h-24 w-24 text-accent drop-shadow-[0_4px_10px_hsl(var(--accent)/0.5)]" strokeWidth={1.5} />
+                </div>
+                <DialogTitle className="text-4xl sm:text-5xl font-bold text-card-foreground animate-winner-reveal" style={{ animationDelay: '0.2s' }}>
+                  {winner?.name}
+                </DialogTitle>
+                <DialogDescription className="text-xl text-card-foreground/90 mt-3 animate-winner-reveal" style={{ animationDelay: '0.4s' }}>
+                  Congratulations!
+                </DialogDescription>
+              </DialogHeader>
+            </DialogContent>
+          </Dialog>
+
+          {!isDrawing && winner && !showWinnerModal && (
             <div className="mt-8 sm:mt-12">
               <WinnerDisplay winner={winner} />
             </div>
