@@ -19,8 +19,8 @@ import {
 } from "@/components/ui/select";
 import { UserPlus, Search, PlusCircle, Trash2, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Card, CardContent } from "@/components/ui/card"; // For listing all employees
-import { ScrollArea } from "@/components/ui/scroll-area"; // For scrollable list
+import { Card, CardContent } from "@/components/ui/card"; 
+import { ScrollArea } from "@/components/ui/scroll-area"; 
 
 interface EmployeeSelectorProps {
   allEmployees: Employee[];
@@ -55,7 +55,6 @@ export function EmployeeSelector({
   const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const term = e.target.value;
     setSearchTerm(term);
-    // Always try to open if there's a term and potential matches. Popover content handles "no results"
     if (term.length > 0 && availableEmployeesForSelection.length > 0) {
       setIsPopoverOpen(true);
     } else {
@@ -69,10 +68,10 @@ export function EmployeeSelector({
       title: "Employee Added to Pool",
       description: `${employee.name} is now in the raffle!`,
     });
-    setSearchTerm(""); // Clear search input
-    setIsPopoverOpen(false); // Close popover
-    setStagedEmployeeIdForDropdown(""); // Clear dropdown selection if any
-    inputRef.current?.focus(); // Optionally refocus search or another field
+    setSearchTerm(""); 
+    setIsPopoverOpen(false); 
+    setStagedEmployeeIdForDropdown(""); 
+    inputRef.current?.focus(); 
   };
 
   const handleDropdownSelect = (employeeId: string) => {
@@ -87,7 +86,7 @@ export function EmployeeSelector({
         title: "Employee Added to Pool",
         description: `${employee.name} is now in the raffle!`,
       });
-      setStagedEmployeeIdForDropdown(""); // Reset select to placeholder
+      setStagedEmployeeIdForDropdown(""); 
       inputRef.current?.focus(); 
     }
   };
@@ -117,7 +116,7 @@ export function EmployeeSelector({
     }
 
     const newEmployee: Employee = {
-      id: Date.now().toString() + '-' + Math.random().toString(36).substring(2, 7), // Simple unique ID
+      id: Date.now().toString() + '-' + Math.random().toString(36).substring(2, 7), 
       name: trimmedName,
     };
 
@@ -132,16 +131,14 @@ export function EmployeeSelector({
   const handleDeletePress = (employeeId: string, employeeName: string) => {
     if (window.confirm(`Are you sure you want to permanently remove ${employeeName} from the system? This action cannot be undone.`)) {
       onDeleteEmployeeSystemWide(employeeId);
-      // Toast is handled in RafflePage after successful deletion
     }
   };
   
   React.useEffect(() => {
-    // This effect attempts to manage popover visibility based on search term and results
     if (searchTerm.length > 0 && availableEmployeesForSelection.length > 0 && filteredEmployeesForSearch.length > 0) {
       setIsPopoverOpen(true);
     } else if (searchTerm.length > 0 && availableEmployeesForSelection.length > 0 && filteredEmployeesForSearch.length === 0) {
-       setIsPopoverOpen(true); // Keep open to show "No matches"
+       setIsPopoverOpen(true); 
     }
      else {
       setIsPopoverOpen(false);
@@ -151,7 +148,6 @@ export function EmployeeSelector({
 
   return (
     <div className="space-y-6">
-      {/* Section 1: Add Existing Employee to Pool */}
       <div>
         <h3 className="text-sm font-medium mb-2 text-muted-foreground flex items-center"><UserPlus className="mr-2 h-4 w-4" />Add Existing Employee to Pool</h3>
         <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
@@ -168,7 +164,7 @@ export function EmployeeSelector({
                   if (searchTerm.length > 0 && availableEmployeesForSelection.length > 0 && filteredEmployeesForSearch.length > 0) {
                     setIsPopoverOpen(true);
                   } else if (searchTerm.length === 0 && availableEmployeesForSelection.length > 0) {
-                    setIsPopoverOpen(true); // Open to show full list if search is cleared but was focused
+                    setIsPopoverOpen(true); 
                   }
                 }}
                 className="pl-8 w-full"
@@ -184,7 +180,7 @@ export function EmployeeSelector({
             align="start"
           >
             {(() => {
-              if (!isPopoverOpen) return null; // Only render content if popover is meant to be open
+              if (!isPopoverOpen) return null; 
               if (availableEmployeesForSelection.length === 0) {
                 return <p className="p-3 text-sm text-muted-foreground">All employees are already in the raffle pool or none exist.</p>;
               }
@@ -198,7 +194,7 @@ export function EmployeeSelector({
                  return <p className="p-3 text-sm text-muted-foreground">Type to search or use the dropdown.</p>;
               }
               
-              if (listToDisplay.length === 0) { // Should be caught by earlier conditions but as a fallback
+              if (listToDisplay.length === 0) { 
                 return <p className="p-3 text-sm text-muted-foreground">No available employees.</p>;
               }
 
@@ -233,7 +229,7 @@ export function EmployeeSelector({
 
         <Select
           onValueChange={handleDropdownSelect}
-          value={stagedEmployeeIdForDropdown} // Controlled component
+          value={stagedEmployeeIdForDropdown} 
           disabled={sortedAvailableEmployeesForDropdown.length === 0}
         >
           <SelectTrigger className="w-full">
@@ -253,7 +249,6 @@ export function EmployeeSelector({
         </Select>
       </div>
 
-      {/* Section 2: Create New Employee */}
       <div className="pt-2">
         <h3 className="text-sm font-medium mb-2 text-muted-foreground flex items-center"><PlusCircle className="mr-2 h-4 w-4" />Create New Employee</h3>
         <div className="flex space-x-2">
@@ -271,7 +266,6 @@ export function EmployeeSelector({
         </div>
       </div>
 
-      {/* Section 3: Manage All Employees in System */}
       <div className="pt-2">
         <h3 className="text-sm font-medium mb-2 text-muted-foreground flex items-center"><Users className="mr-2 h-4 w-4" />All Employees in System ({allEmployees.length})</h3>
         {allEmployees.length === 0 ? (
