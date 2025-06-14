@@ -150,7 +150,7 @@ export function EmployeeSelector({
         ) : (
           <ScrollArea className="border rounded-md h-64">
             <div className="p-2 space-y-1">
-              {allEmployees.sort((a,b) => a.name.localeCompare(b.name)).map((employee) => (
+              {[...allEmployees].sort((a,b) => a.name.localeCompare(b.name)).map((employee) => (
                 <div key={employee.id} className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50 text-sm">
                   <span className="text-foreground">{employee.name}</span>
                   <Button
