@@ -49,10 +49,7 @@ export default function RafflePage() {
     const employeeToAdd = allEmployees.find((emp) => emp.id === employeeId);
     if (employeeToAdd && !rafflePool.find((emp) => emp.id === employeeId)) {
       setRafflePool((prevPool) => [...prevPool, employeeToAdd]);
-       toast({
-        title: "Employee Added to Pool",
-        description: `${employeeToAdd.name} is now in the raffle!`,
-      });
+      // Toast is now handled in EmployeeSelector for direct adds
     }
   };
 
@@ -61,12 +58,26 @@ export default function RafflePage() {
     setRafflePool((prevPool) => prevPool.filter((emp) => emp.id !== employeeId));
     if (employeeToRemove) {
       toast({
-        title: "Employee Removed",
-        description: `${employeeToRemove.name} has been removed from the raffle.`,
-        variant: "destructive",
+        title: "Employee Removed from Pool",
+        description: `${employeeToRemove.name} has been removed from the raffle pool.`,
       });
     }
   };
+
+  const handleDeleteEmployeeSystemWide = (employeeId: string) => {
+    const employeeToRemove = allEmployees.find(emp => emp.id === employeeId);
+    if (!employeeToRemove) return;
+
+    setAllEmployees(prev => prev.filter(emp => emp.id !== employeeId));
+    setRafflePool(prev => prev.filter(emp => emp.id !== employeeId)); // Also remove from pool
+
+    toast({
+      title: "Employee Removed",
+      description: `${employeeToRemove.name} has been removed from the system and the raffle pool.`,
+      variant: "destructive",
+    });
+  };
+
 
   const handleDrawWinner = () => {
     if (rafflePool.length === 0) {
@@ -86,7 +97,6 @@ export default function RafflePage() {
     }
     setShowConfetti(false);
 
-    // Non-error toast for drawing start
     toast({
       title: "Drawing Winner...",
       description: "Get ready to find out who the lucky employee is!",
@@ -99,29 +109,29 @@ export default function RafflePage() {
       setShowWinnerModal(true);
       setShowConfetti(true);
       setIsDrawing(false);
-      setRafflePool([]); // Clear pool after winner is drawn
+      
+      // Clear pool and also remove winner from allEmployees list to prevent re-drawing
+      // setAllEmployees(prev => prev.filter(emp => emp.id !== newWinner.id)); // Optional: remove winner from main list
+      setRafflePool([]); 
+      
       toast({
         title: "Winner Selected!",
         description: `Congratulations to ${newWinner.name}! The raffle pool has been cleared.`,
-        duration: 5000, // Longer duration for winner announcement
+        duration: 5000, 
       });
 
-      // Timer to close modal
       modalTimerRef.current = setTimeout(() => {
         setShowWinnerModal(false);
-      }, 7000); // Modal stays for 7 seconds
+      }, 7000); 
 
-      // Timer to stop confetti
-      // Ensure confetti runs a bit longer than the modal might be open or as long as the announcement toast
       setTimeout(() => {
         setShowConfetti(false);
-      }, 6000); // Confetti for 6 seconds
+      }, 6000);
 
-    }, 2500); // Simulate drawing time
+    }, 2500); 
   };
 
   _React.useEffect(() => {
-    // Cleanup timer on component unmount
     return () => {
       if (modalTimerRef.current) {
         clearTimeout(modalTimerRef.current);
@@ -166,6 +176,7 @@ export default function RafflePage() {
                 setAllEmployees={setAllEmployees}
                 availableEmployeesForSelection={availableToAddToPoolEmployees}
                 onAddEmployeeToPool={handleAddEmployeeToPool}
+                onDeleteEmployeeSystemWide={handleDeleteEmployeeSystemWide}
               />
             </CardContent>
           </Card>

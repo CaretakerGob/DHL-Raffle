@@ -17,21 +17,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { UserPlus, Search, PlusCircle } from "lucide-react";
+import { UserPlus, Search, PlusCircle, Trash2, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Card, CardContent } from "@/components/ui/card"; // For listing all employees
+import { ScrollArea } from "@/components/ui/scroll-area"; // For scrollable list
 
 interface EmployeeSelectorProps {
   allEmployees: Employee[];
   setAllEmployees: React.Dispatch<React.SetStateAction<Employee[]>>;
   availableEmployeesForSelection: Employee[];
   onAddEmployeeToPool: (employeeId: string) => void;
+  onDeleteEmployeeSystemWide: (employeeId: string) => void;
 }
 
 export function EmployeeSelector({
   allEmployees,
   setAllEmployees,
   availableEmployeesForSelection,
-  onAddEmployeeToPool
+  onAddEmployeeToPool,
+  onDeleteEmployeeSystemWide
 }: EmployeeSelectorProps) {
   const [searchTerm, setSearchTerm] = React.useState<string>("");
   const [stagedEmployeeIdForDropdown, setStagedEmployeeIdForDropdown] = React.useState<string>("");
@@ -51,19 +55,24 @@ export function EmployeeSelector({
   const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const term = e.target.value;
     setSearchTerm(term);
-    if (term.length > 0 && filteredEmployeesForSearch.length > 0) {
+    // Always try to open if there's a term and potential matches. Popover content handles "no results"
+    if (term.length > 0 && availableEmployeesForSelection.length > 0) {
       setIsPopoverOpen(true);
     } else {
       setIsPopoverOpen(false);
     }
   };
 
-  const handleEmployeeSelectFromSearch = (employee: Employee) => {
+  const handleEmployeeSelect = (employee: Employee) => {
     onAddEmployeeToPool(employee.id);
-    // Toast is handled in RafflePage
-    setSearchTerm("");
-    setIsPopoverOpen(false);
-    inputRef.current?.focus();
+    toast({
+      title: "Employee Added to Pool",
+      description: `${employee.name} is now in the raffle!`,
+    });
+    setSearchTerm(""); // Clear search input
+    setIsPopoverOpen(false); // Close popover
+    setStagedEmployeeIdForDropdown(""); // Clear dropdown selection if any
+    inputRef.current?.focus(); // Optionally refocus search or another field
   };
 
   const handleDropdownSelect = (employeeId: string) => {
@@ -74,9 +83,12 @@ export function EmployeeSelector({
     const employee = availableEmployeesForSelection.find(emp => emp.id === employeeId);
     if (employee) {
       onAddEmployeeToPool(employee.id);
-      // Toast is handled in RafflePage
+      toast({
+        title: "Employee Added to Pool",
+        description: `${employee.name} is now in the raffle!`,
+      });
       setStagedEmployeeIdForDropdown(""); // Reset select to placeholder
-      inputRef.current?.focus(); // Optionally focus back on search or another field
+      inputRef.current?.focus(); 
     }
   };
 
@@ -109,31 +121,39 @@ export function EmployeeSelector({
       name: trimmedName,
     };
 
-    setAllEmployees((prevAllEmployees) => [...prevAllEmployees, newEmployee]);
+    setAllEmployees((prevAllEmployees) => [...prevAllEmployees, newEmployee].sort((a,b) => a.name.localeCompare(b.name)));
     toast({
       title: "Employee Created",
       description: `${newEmployee.name} has been added to the system and is available for the raffle.`,
     });
-    setNewEmployeeNameInput(""); // Clear input
+    setNewEmployeeNameInput(""); 
+  };
+
+  const handleDeletePress = (employeeId: string, employeeName: string) => {
+    if (window.confirm(`Are you sure you want to permanently remove ${employeeName} from the system? This action cannot be undone.`)) {
+      onDeleteEmployeeSystemWide(employeeId);
+      // Toast is handled in RafflePage after successful deletion
+    }
   };
   
   React.useEffect(() => {
-    if (searchTerm.length > 0 && filteredEmployeesForSearch.length > 0 && !isPopoverOpen) {
+    // This effect attempts to manage popover visibility based on search term and results
+    if (searchTerm.length > 0 && availableEmployeesForSelection.length > 0 && filteredEmployeesForSearch.length > 0) {
       setIsPopoverOpen(true);
-    } else if ((searchTerm.length === 0 || filteredEmployeesForSearch.length === 0) && isPopoverOpen) {
-       if (searchTerm.length > 0 && filteredEmployeesForSearch.length === 0 && availableEmployeesForSelection.length > 0) {
-        // Keep popover open to show "No matches" if user is typing
-      } else {
-        setIsPopoverOpen(false);
-      }
+    } else if (searchTerm.length > 0 && availableEmployeesForSelection.length > 0 && filteredEmployeesForSearch.length === 0) {
+       setIsPopoverOpen(true); // Keep open to show "No matches"
     }
-  }, [searchTerm, filteredEmployeesForSearch, availableEmployeesForSelection.length, isPopoverOpen]);
+     else {
+      setIsPopoverOpen(false);
+    }
+  }, [searchTerm, filteredEmployeesForSearch.length, availableEmployeesForSelection.length]);
 
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      {/* Section 1: Add Existing Employee to Pool */}
       <div>
-        <h3 className="text-sm font-medium mb-1 text-muted-foreground">Add Existing Employee to Pool</h3>
+        <h3 className="text-sm font-medium mb-2 text-muted-foreground flex items-center"><UserPlus className="mr-2 h-4 w-4" />Add Existing Employee to Pool</h3>
         <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
           <PopoverTrigger asChild>
             <div className="relative">
@@ -141,12 +161,14 @@ export function EmployeeSelector({
               <Input
                 ref={inputRef}
                 type="search"
-                placeholder="Search or select an employee..."
+                placeholder="Search available employees..."
                 value={searchTerm}
                 onChange={handleSearchInputChange}
-                onClick={() => {
+                 onClick={() => {
                   if (searchTerm.length > 0 && availableEmployeesForSelection.length > 0 && filteredEmployeesForSearch.length > 0) {
                     setIsPopoverOpen(true);
+                  } else if (searchTerm.length === 0 && availableEmployeesForSelection.length > 0) {
+                    setIsPopoverOpen(true); // Open to show full list if search is cleared but was focused
                   }
                 }}
                 className="pl-8 w-full"
@@ -160,23 +182,34 @@ export function EmployeeSelector({
             id="employee-prediction-list"
             className="w-[--radix-popover-trigger-width] p-0"
             align="start"
-            onOpenAutoFocus={(e) => {
-              // e.preventDefault(); // Keep focus on input
-            }}
           >
             {(() => {
-              if (searchTerm.length === 0) return null; 
+              if (!isPopoverOpen) return null; // Only render content if popover is meant to be open
               if (availableEmployeesForSelection.length === 0) {
-                return <p className="p-3 text-sm text-muted-foreground">All employees are already in the raffle pool.</p>;
+                return <p className="p-3 text-sm text-muted-foreground">All employees are already in the raffle pool or none exist.</p>;
               }
-              if (filteredEmployeesForSearch.length > 0) {
-                return (
-                  <div role="listbox" className="max-h-60 overflow-y-auto py-1">
-                    {filteredEmployeesForSearch.map((employee) => (
+              if (searchTerm.length > 0 && filteredEmployeesForSearch.length === 0) {
+                 return <p className="p-3 text-sm text-muted-foreground">No employees match your search.</p>;
+              }
+
+              const listToDisplay = searchTerm.length > 0 ? filteredEmployeesForSearch : sortedAvailableEmployeesForDropdown;
+
+              if (listToDisplay.length === 0 && searchTerm.length === 0) {
+                 return <p className="p-3 text-sm text-muted-foreground">Type to search or use the dropdown.</p>;
+              }
+              
+              if (listToDisplay.length === 0) { // Should be caught by earlier conditions but as a fallback
+                return <p className="p-3 text-sm text-muted-foreground">No available employees.</p>;
+              }
+
+              return (
+                <ScrollArea className="max-h-60">
+                  <div role="listbox" className="py-1">
+                    {listToDisplay.map((employee) => (
                       <div
                         key={employee.id}
-                        onClick={() => handleEmployeeSelectFromSearch(employee)}
-                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleEmployeeSelectFromSearch(employee); }}}
+                        onClick={() => handleEmployeeSelect(employee)}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleEmployeeSelect(employee); }}}
                         tabIndex={0}
                         role="option"
                         aria-selected={stagedEmployeeIdForDropdown === employee.id}
@@ -186,9 +219,8 @@ export function EmployeeSelector({
                       </div>
                     ))}
                   </div>
-                );
-              }
-              return <p className="p-3 text-sm text-muted-foreground">No employees match your search.</p>;
+                </ScrollArea>
+              );
             })()}
           </PopoverContent>
         </Popover>
@@ -201,14 +233,14 @@ export function EmployeeSelector({
 
         <Select
           onValueChange={handleDropdownSelect}
-          value={stagedEmployeeIdForDropdown}
+          value={stagedEmployeeIdForDropdown} // Controlled component
           disabled={sortedAvailableEmployeesForDropdown.length === 0}
         >
           <SelectTrigger className="w-full">
             <SelectValue placeholder="Select an employee directly..." />
           </SelectTrigger>
           <SelectContent>
-            {sortedAvailableEmployeesForDropdown.length === 0 && !searchTerm ? (
+            {sortedAvailableEmployeesForDropdown.length === 0 ? (
               <SelectItem value="no-employees" disabled>All available employees are in the pool or none exist.</SelectItem>
             ) : (
               sortedAvailableEmployeesForDropdown.map(employee => (
@@ -221,24 +253,52 @@ export function EmployeeSelector({
         </Select>
       </div>
 
+      {/* Section 2: Create New Employee */}
       <div className="pt-2">
-        <h3 className="text-sm font-medium mb-1 text-muted-foreground">Create New Employee</h3>
+        <h3 className="text-sm font-medium mb-2 text-muted-foreground flex items-center"><PlusCircle className="mr-2 h-4 w-4" />Create New Employee</h3>
         <div className="flex space-x-2">
           <Input
             type="text"
             placeholder="Enter new employee's name"
             value={newEmployeeNameInput}
             onChange={(e) => setNewEmployeeNameInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') handleCreateAndAddEmployee();}}
             className="flex-grow"
           />
           <Button onClick={handleCreateAndAddEmployee} variant="outline">
-            <PlusCircle className="mr-2 h-4 w-4" /> Add New
+            Create & Add
           </Button>
         </div>
-         {allEmployees.length === 0 && (
+      </div>
+
+      {/* Section 3: Manage All Employees in System */}
+      <div className="pt-2">
+        <h3 className="text-sm font-medium mb-2 text-muted-foreground flex items-center"><Users className="mr-2 h-4 w-4" />All Employees in System ({allEmployees.length})</h3>
+        {allEmployees.length === 0 ? (
           <p className="text-xs text-muted-foreground mt-1">
-            No employees in the system yet. Add one to get started!
+            No employees in the system yet. Add one using the form above!
           </p>
+        ) : (
+          <ScrollArea className="max-h-72 border rounded-md">
+            <div className="p-1 space-y-1">
+              {allEmployees.sort((a,b) => a.name.localeCompare(b.name)).map((employee) => (
+                <Card key={employee.id} className="bg-card shadow-xs">
+                  <CardContent className="p-2 flex items-center justify-between">
+                    <span className="text-card-foreground text-sm">{employee.name}</span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => handleDeletePress(employee.id, employee.name)}
+                      aria-label={`Remove ${employee.name} from system`}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive hover:text-destructive/80" />
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </ScrollArea>
         )}
       </div>
     </div>
