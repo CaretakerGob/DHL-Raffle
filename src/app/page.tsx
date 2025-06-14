@@ -23,9 +23,10 @@ import { Settings, Trophy } from "lucide-react";
 
 const LOCAL_STORAGE_EMPLOYEES_KEY = 'dhlRaffleEmployeesV1';
 
-// Helper to generate unique IDs for mock data
 const generateId = (prefix: string, index: number): string => {
-  return `${prefix}-${index + 1}-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 10)}`;
+  const randomPart = Math.random().toString(36).substring(2, 10);
+  const timestampPart = Date.now().toString(36);
+  return `${prefix}-${index + 1}-${timestampPart}-${randomPart}`;
 };
 
 const RAW_EMPLOYEE_NAMES: string[] = [
@@ -35,7 +36,6 @@ const RAW_EMPLOYEE_NAMES: string[] = [
   'Pablo Picasso', 'Queen Elizabeth', 'Rembrandt van Rijn', 'Simone de Beauvoir', 'Thomas Edison',
   'Ursula K. Le Guin', 'Vincent van Gogh', 'Wolfgang Mozart', 'Xiaoming Li', 'Yoko Ono Zee'
 ];
-
 
 const MOCK_EMPLOYEES_DATA: Employee[] = RAW_EMPLOYEE_NAMES.map((name, index) => ({
   id: generateId('emp', index),
@@ -55,32 +55,30 @@ export default function RafflePage() {
   const { toast } = useToast();
   const [isInitialLoadComplete, setIsInitialLoadComplete] = _React.useState<boolean>(false);
 
-  // Load employees from localStorage on initial mount
+
   _React.useEffect(() => {
     if (typeof window !== 'undefined') {
       const storedEmployeesJson = localStorage.getItem(LOCAL_STORAGE_EMPLOYEES_KEY);
+      let initialDataToSet: Employee[];
+
       if (storedEmployeesJson) {
         try {
           const storedEmployees = JSON.parse(storedEmployeesJson);
-          setAllEmployees(storedEmployees);
+          initialDataToSet = storedEmployees;
         } catch (error) {
-          console.error("Error parsing employees from localStorage:", error);
-          // Fallback to mock data if localStorage is corrupted
-          const initialData = [...MOCK_EMPLOYEES_DATA].sort((a, b) => a.name.localeCompare(b.name));
-          setAllEmployees(initialData);
-          localStorage.setItem(LOCAL_STORAGE_EMPLOYEES_KEY, JSON.stringify(initialData));
+          console.error("Error parsing employees from localStorage, falling back to mock data:", error);
+          initialDataToSet = [...MOCK_EMPLOYEES_DATA].sort((a, b) => a.name.localeCompare(b.name));
+          localStorage.setItem(LOCAL_STORAGE_EMPLOYEES_KEY, JSON.stringify(initialDataToSet));
         }
       } else {
-        // Initialize with mock data if nothing in localStorage
-        const initialData = [...MOCK_EMPLOYEES_DATA].sort((a, b) => a.name.localeCompare(b.name));
-        setAllEmployees(initialData);
-        localStorage.setItem(LOCAL_STORAGE_EMPLOYEES_KEY, JSON.stringify(initialData));
+        initialDataToSet = [...MOCK_EMPLOYEES_DATA].sort((a, b) => a.name.localeCompare(b.name));
+        localStorage.setItem(LOCAL_STORAGE_EMPLOYEES_KEY, JSON.stringify(initialDataToSet));
       }
+      setAllEmployees(initialDataToSet);
       setIsInitialLoadComplete(true);
     }
   }, []);
 
-  // Save employees to localStorage whenever allEmployees state changes
   _React.useEffect(() => {
     if (typeof window !== 'undefined' && isInitialLoadComplete) {
       localStorage.setItem(LOCAL_STORAGE_EMPLOYEES_KEY, JSON.stringify(allEmployees));
@@ -92,7 +90,6 @@ export default function RafflePage() {
     const employeeToAdd = allEmployees.find((emp) => emp.id === employeeId);
     if (employeeToAdd && !rafflePool.find((emp) => emp.id === employeeId)) {
       setRafflePool((prevPool) => [...prevPool, employeeToAdd]);
-      // Toast is handled in EmployeeSelector
     }
   };
 
@@ -107,7 +104,7 @@ export default function RafflePage() {
     }
   };
 
- const handleDeleteEmployeeSystemWide = (employeeId: string) => {
+  const handleDeleteEmployeeSystemWide = (employeeId: string) => {
     let employeeNameForToast: string | undefined;
 
     setAllEmployees(prevAllEmployees => {
@@ -115,14 +112,11 @@ export default function RafflePage() {
       if (employeeFound) {
         employeeNameForToast = employeeFound.name;
       } else {
-        // This case should ideally not happen if the ID comes from a rendered list.
-        // Log for debugging if it occurs.
-        console.warn(`[RafflePage] handleDelete: Employee with ID ${employeeId} not found in prevAllEmployees for toast message.`);
+        console.warn(`[RafflePage] handleDelete: Employee with ID ${employeeId} not found in current 'allEmployees' state for toast message.`);
       }
-      // The list is always kept sorted. Filtering maintains sort order relative to remaining items.
       const newList = prevAllEmployees.filter(emp => emp.id !== employeeId);
-      // console.log(`[RafflePage] setAllEmployees: prev length ${prevAllEmployees.length}, new list length ${newList.length}. Employee to remove: ${employeeNameForToast || 'N/A'}`);
-      return newList; // Already sorted as source is sorted
+      // No need to re-sort if `allEmployees` is always kept sorted (which it should be)
+      return newList;
     });
 
     setRafflePool(prevPool => prevPool.filter(emp => emp.id !== employeeId));
@@ -134,14 +128,13 @@ export default function RafflePage() {
         variant: "destructive",
       });
     } else {
-      // This toast is a fallback if the name couldn't be captured before removal,
-      // e.g., if the find operation failed (which is unlikely if ID is correct).
+      // Fallback toast if the name couldn't be captured.
       toast({
         title: "Employee Removed",
-        description: `An employee has been removed from the system and the raffle pool.`,
+        description: `An employee (ID: ${employeeId}) has been removed from the system and the raffle pool.`,
         variant: "destructive",
       });
-       console.log(`[RafflePage] Toast fallback: Employee with ID ${employeeId} was targeted for deletion.`);
+       console.log(`[RafflePage] Toast fallback: Employee with ID ${employeeId} was targeted for deletion but name not found prior to removal.`);
     }
   };
 
@@ -227,6 +220,7 @@ export default function RafflePage() {
               height={100}
               priority
               className="mb-0"
+              style={{ height: 'auto' }}
             />
           </div>
         </header>
