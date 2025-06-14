@@ -21,9 +21,10 @@ import type { Employee } from "@/types/employee";
 import { useToast } from "@/hooks/use-toast";
 import { Settings, Trophy } from "lucide-react";
 
+const LOCAL_STORAGE_EMPLOYEES_KEY = 'dhlRaffleEmployeesV1';
+
 // Helper to generate unique IDs for mock data
 const generateId = (prefix: string, index: number): string => {
-  // More robust ID: prefix, index, timestamp, long random string
   return `${prefix}-${index + 1}-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 10)}`;
 };
 
@@ -43,9 +44,7 @@ const MOCK_EMPLOYEES_DATA: Employee[] = RAW_EMPLOYEE_NAMES.map((name, index) => 
 
 
 export default function RafflePage() {
-  const [allEmployees, setAllEmployees] = _React.useState<Employee[]>(() =>
-    [...MOCK_EMPLOYEES_DATA].sort((a,b) => a.name.localeCompare(b.name))
-  );
+  const [allEmployees, setAllEmployees] = _React.useState<Employee[]>([]);
   const [rafflePool, setRafflePool] = _React.useState<Employee[]>([]);
   const [winner, setWinner] = _React.useState<Employee | null>(null);
   const [isDrawing, setIsDrawing] = _React.useState<boolean>(false);
@@ -54,6 +53,40 @@ export default function RafflePage() {
   const [showManageEmployeesModal, setShowManageEmployeesModal] = _React.useState<boolean>(false);
   const modalTimerRef = _React.useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
+  const [isInitialLoadComplete, setIsInitialLoadComplete] = _React.useState<boolean>(false);
+
+  // Load employees from localStorage on initial mount
+  _React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const storedEmployeesJson = localStorage.getItem(LOCAL_STORAGE_EMPLOYEES_KEY);
+      if (storedEmployeesJson) {
+        try {
+          const storedEmployees = JSON.parse(storedEmployeesJson);
+          setAllEmployees(storedEmployees);
+        } catch (error) {
+          console.error("Error parsing employees from localStorage:", error);
+          // Fallback to mock data if localStorage is corrupted
+          const initialData = [...MOCK_EMPLOYEES_DATA].sort((a, b) => a.name.localeCompare(b.name));
+          setAllEmployees(initialData);
+          localStorage.setItem(LOCAL_STORAGE_EMPLOYEES_KEY, JSON.stringify(initialData));
+        }
+      } else {
+        // Initialize with mock data if nothing in localStorage
+        const initialData = [...MOCK_EMPLOYEES_DATA].sort((a, b) => a.name.localeCompare(b.name));
+        setAllEmployees(initialData);
+        localStorage.setItem(LOCAL_STORAGE_EMPLOYEES_KEY, JSON.stringify(initialData));
+      }
+      setIsInitialLoadComplete(true);
+    }
+  }, []);
+
+  // Save employees to localStorage whenever allEmployees state changes
+  _React.useEffect(() => {
+    if (typeof window !== 'undefined' && isInitialLoadComplete) {
+      localStorage.setItem(LOCAL_STORAGE_EMPLOYEES_KEY, JSON.stringify(allEmployees));
+    }
+  }, [allEmployees, isInitialLoadComplete]);
+
 
   const handleAddEmployeeToPool = (employeeId: string) => {
     const employeeToAdd = allEmployees.find((emp) => emp.id === employeeId);
@@ -74,22 +107,25 @@ export default function RafflePage() {
     }
   };
 
-  const handleDeleteEmployeeSystemWide = (employeeId: string) => {
-    console.log(`[RafflePage] handleDeleteEmployeeSystemWide called for ID: ${employeeId}`);
+ const handleDeleteEmployeeSystemWide = (employeeId: string) => {
     let employeeNameForToast: string | undefined;
 
-    setAllEmployees((prevAllEmployees) => {
+    setAllEmployees(prevAllEmployees => {
       const employeeFound = prevAllEmployees.find(emp => emp.id === employeeId);
       if (employeeFound) {
         employeeNameForToast = employeeFound.name;
+      } else {
+        // This case should ideally not happen if the ID comes from a rendered list.
+        // Log for debugging if it occurs.
+        console.warn(`[RafflePage] handleDelete: Employee with ID ${employeeId} not found in prevAllEmployees for toast message.`);
       }
-      // The list is always kept sorted, so filtering maintains sort order.
-      const newList = prevAllEmployees.filter((emp) => emp.id !== employeeId);
-      console.log(`[RafflePage] setAllEmployees: prev length ${prevAllEmployees.length}, new list length ${newList.length}. Employee to remove: ${employeeNameForToast || 'N/A'}`);
-      return newList;
+      // The list is always kept sorted. Filtering maintains sort order relative to remaining items.
+      const newList = prevAllEmployees.filter(emp => emp.id !== employeeId);
+      // console.log(`[RafflePage] setAllEmployees: prev length ${prevAllEmployees.length}, new list length ${newList.length}. Employee to remove: ${employeeNameForToast || 'N/A'}`);
+      return newList; // Already sorted as source is sorted
     });
 
-    setRafflePool((prevPool) => prevPool.filter((emp) => emp.id !== employeeId));
+    setRafflePool(prevPool => prevPool.filter(emp => emp.id !== employeeId));
 
     if (employeeNameForToast) {
       toast({
@@ -98,14 +134,14 @@ export default function RafflePage() {
         variant: "destructive",
       });
     } else {
-      // This case should ideally not happen if the UI reflects the state correctly.
-      // It means an attempt to delete an ID that's not in `allEmployees` at the moment of deletion.
-      console.warn(`[RafflePage] Employee with ID ${employeeId} not found in allEmployees during state update for toast.`);
+      // This toast is a fallback if the name couldn't be captured before removal,
+      // e.g., if the find operation failed (which is unlikely if ID is correct).
       toast({
-        title: "Error Removing Employee",
-        description: `Could not find employee with ID ${employeeId} to remove.`,
+        title: "Employee Removed",
+        description: `An employee has been removed from the system and the raffle pool.`,
         variant: "destructive",
       });
+       console.log(`[RafflePage] Toast fallback: Employee with ID ${employeeId} was targeted for deletion.`);
     }
   };
 
@@ -217,13 +253,17 @@ export default function RafflePage() {
               </DialogHeader>
               <ScrollArea className="flex-1">
                 <div className="px-6 pb-6">
-                  <EmployeeSelector
-                    allEmployees={allEmployees}
-                    setAllEmployees={setAllEmployees}
-                    availableEmployeesForSelection={availableToAddToPoolEmployees}
-                    onAddEmployeeToPool={handleAddEmployeeToPool}
-                    onDeleteEmployeeSystemWide={handleDeleteEmployeeSystemWide}
-                  />
+                  {isInitialLoadComplete ? (
+                    <EmployeeSelector
+                      allEmployees={allEmployees}
+                      setAllEmployees={setAllEmployees}
+                      availableEmployeesForSelection={availableToAddToPoolEmployees}
+                      onAddEmployeeToPool={handleAddEmployeeToPool}
+                      onDeleteEmployeeSystemWide={handleDeleteEmployeeSystemWide}
+                    />
+                  ) : (
+                    <div className="text-center p-8">Loading employees...</div>
+                  )}
                 </div>
               </ScrollArea>
             </DialogContent>
