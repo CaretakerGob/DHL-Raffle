@@ -11,7 +11,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { EmployeeSelector } from "@/components/employee-selector";
 import { RafflePool } from "@/components/raffle-pool";
@@ -51,7 +50,7 @@ export default function RafflePage() {
     const employeeToAdd = allEmployees.find((emp) => emp.id === employeeId);
     if (employeeToAdd && !rafflePool.find((emp) => emp.id === employeeId)) {
       setRafflePool((prevPool) => [...prevPool, employeeToAdd]);
-      // Toast is now handled in EmployeeSelector for direct adds
+      // Toast is handled in EmployeeSelector
     }
   };
 
@@ -152,7 +151,7 @@ export default function RafflePage() {
       />
       <div className="absolute inset-0 bg-background/50" />
 
-      <div className="relative z-10 flex flex-col items-center py-12 sm:py-16 px-4">
+      <div className="relative z-10 flex flex-col items-center py-20 sm:py-24 px-4">
         <header className="mb-6 sm:mb-8 flex flex-col items-center">
           <div className="bg-card/90 backdrop-blur-sm py-2 px-3 rounded-lg shadow-xl border border-white/20 flex flex-col items-center">
             <Image
@@ -161,7 +160,7 @@ export default function RafflePage() {
               width={350}
               height={105}
               priority
-              className="mb-1" 
+              className="mb-1"
             />
           </div>
         </header>
@@ -169,9 +168,9 @@ export default function RafflePage() {
         <main className="w-full max-w-xl space-y-6 sm:space-y-8">
           <div className="text-center">
             <Button 
-              variant="outline" 
+              variant="default" 
               onClick={() => setShowManageEmployeesModal(true)}
-              className="bg-card/90 backdrop-blur-md hover:bg-card/70 border-white/20 shadow-md"
+              className="shadow-md"
             >
               <Settings className="mr-2 h-5 w-5" />
               Manage Employees
@@ -260,3 +259,4 @@ export default function RafflePage() {
     </div>
   );
 }
+
