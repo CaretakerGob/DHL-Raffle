@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmployeeSelector } from "@/components/employee-selector";
 import { RafflePool } from "@/components/raffle-pool";
 import { WinnerDisplay } from "@/components/winner-display";
+import { Confetti } from "@/components/confetti"; // Import Confetti
 import type { Employee } from "@/types/employee";
 import { useToast } from "@/hooks/use-toast";
 
@@ -31,12 +32,17 @@ export default function RafflePage() {
   const [rafflePool, setRafflePool] = _React.useState<Employee[]>([]);
   const [winner, setWinner] = _React.useState<Employee | null>(null);
   const [isDrawing, setIsDrawing] = _React.useState<boolean>(false);
+  const [showConfetti, setShowConfetti] = _React.useState<boolean>(false); // State for confetti
   const { toast } = useToast();
 
   const handleAddEmployee = (employeeId: string) => {
     const employeeToAdd = _allEmployees.find((emp) => emp.id === employeeId);
     if (employeeToAdd && !rafflePool.find((emp) => emp.id === employeeId)) {
       setRafflePool((prevPool) => [...prevPool, employeeToAdd]);
+       toast({
+        title: "Employee Added",
+        description: `${employeeToAdd.name} has been added to the raffle.`,
+      });
     }
   };
 
@@ -64,6 +70,7 @@ export default function RafflePage() {
 
     setIsDrawing(true);
     setWinner(null);
+    setShowConfetti(false); // Ensure confetti is reset if re-drawing quickly
 
     toast({
       title: "Drawing Winner...",
@@ -74,6 +81,7 @@ export default function RafflePage() {
       const randomIndex = Math.floor(Math.random() * rafflePool.length);
       const newWinner = rafflePool[randomIndex];
       setWinner(newWinner);
+      setShowConfetti(true); // Trigger confetti
       setIsDrawing(false);
       setRafflePool([]); 
       toast({
@@ -81,6 +89,12 @@ export default function RafflePage() {
         description: `Congratulations to ${newWinner.name}! The raffle pool has been cleared.`,
         duration: 5000,
       });
+
+      // Hide confetti after a delay to allow re-triggering
+      setTimeout(() => {
+        setShowConfetti(false);
+      }, 6000); // Duration should be longer than confetti animation (3s + 1.5s delay) + buffer
+
     }, 2500); 
   };
 
@@ -90,14 +104,15 @@ export default function RafflePage() {
 
   return (
     <div className="relative min-h-screen text-foreground">
+      <Confetti active={showConfetti} count={150} /> {/* Add Confetti component */}
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat bg-fixed"
         style={{ backgroundImage: "url('/BG.png')" }}
       />
       <div className="absolute inset-0 bg-background/50" /> 
 
-      <div className="relative z-10 flex flex-col items-center py-16 sm:py-20 px-4">
-        <header className="mb-8 sm:mb-10 flex justify-center">
+      <div className="relative z-10 flex flex-col items-center py-20 sm:py-24 px-4">
+        <header className="mb-8 sm:mb-10 flex flex-col items-center">
           <div className="bg-card/90 backdrop-blur-sm py-2 px-3 rounded-lg shadow-xl border border-white/20 flex flex-col items-center">
             <Image
               src="/DHL-raffle-Logo.png"
