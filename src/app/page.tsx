@@ -151,7 +151,7 @@ export default function RafflePage() {
       />
       <div className="absolute inset-0 bg-background/50" />
 
-      <div className="relative z-10 flex flex-col items-center py-20 sm:py-24 px-4">
+      <div className="relative z-10 flex flex-col items-center py-24 sm:py-28 px-4">
         <header className="mb-6 sm:mb-8 flex flex-col items-center">
           <div className="bg-card/90 backdrop-blur-sm py-2 px-3 rounded-lg shadow-xl border border-white/20 flex flex-col items-center">
             <Image
@@ -160,7 +160,7 @@ export default function RafflePage() {
               width={350}
               height={105}
               priority
-              className="mb-1"
+              className="mb-0" 
             />
           </div>
         </header>
@@ -178,14 +178,14 @@ export default function RafflePage() {
           </div>
           
           <Dialog open={showManageEmployeesModal} onOpenChange={setShowManageEmployeesModal}>
-            <DialogContent className="sm:max-w-lg bg-card/95 backdrop-blur-xl border-white/20 max-h-[80vh] flex flex-col">
+            <DialogContent className="sm:max-w-lg bg-card/95 backdrop-blur-xl border-primary max-h-[80vh] flex flex-col">
               <DialogHeader>
-                <DialogTitle className="text-xl sm:text-2xl">Manage Employees</DialogTitle>
+                <DialogTitle className="text-xl sm:text-2xl text-primary">Manage Employees</DialogTitle>
                 <DialogDescription>
                   Add, create, or remove employees from the system.
                 </DialogDescription>
               </DialogHeader>
-              <div className="overflow-y-auto flex-grow pr-2 -mr-2"> {/* Added for scrollability */}
+              <div className="overflow-y-auto flex-grow pr-2 -mr-2">
                 <EmployeeSelector
                   allEmployees={allEmployees}
                   setAllEmployees={setAllEmployees}
@@ -259,4 +259,3 @@ export default function RafflePage() {
     </div>
   );
 }
-
