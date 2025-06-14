@@ -148,7 +148,7 @@ export function EmployeeSelector({
             No employees in the system yet. Add one using the form above!
           </p>
         ) : (
-          <ScrollArea className="border rounded-md max-h-60">
+          <ScrollArea className="border rounded-md max-h-32">
             <div className="p-2 space-y-1">
               {allEmployees.sort((a,b) => a.name.localeCompare(b.name)).map((employee) => (
                 <div key={employee.id} className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50 text-sm">
