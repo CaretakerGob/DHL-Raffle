@@ -35,6 +35,7 @@ export function EmployeeSelector({
   const [newEmployeeNameInput, setNewEmployeeNameInput] = React.useState<string>("");
   const { toast } = useToast();
 
+  // availableEmployeesForSelection is already filtered, sort it for display
   const sortedAvailableEmployeesForDropdown = React.useMemo(() => {
     return [...availableEmployeesForSelection].sort((a, b) => a.name.localeCompare(b.name));
   }, [availableEmployeesForSelection]);
@@ -51,7 +52,7 @@ export function EmployeeSelector({
         title: "Employee Added to Pool",
         description: `${employee.name} is now in the raffle!`,
       });
-      setStagedEmployeeIdForDropdown("");
+      setStagedEmployeeIdForDropdown(""); // Reset dropdown after selection
     }
   };
 
@@ -84,6 +85,8 @@ export function EmployeeSelector({
       name: trimmedName,
     };
 
+    // The parent's setAllEmployees state setter (passed as 'setAllEmployees' prop)
+    // will handle adding and re-sorting the main list.
     setAllEmployees((prevAllEmployees) => [...prevAllEmployees, newEmployee].sort((a,b) => a.name.localeCompare(b.name)));
     toast({
       title: "Employee Created",
@@ -108,7 +111,7 @@ export function EmployeeSelector({
           disabled={sortedAvailableEmployeesForDropdown.length === 0}
         >
           <SelectTrigger className="w-full">
-            <SelectValue placeholder="Select an employee..." />
+            <SelectValue placeholder="Select an employee to add to pool..." />
           </SelectTrigger>
           <SelectContent>
             {sortedAvailableEmployeesForDropdown.length === 0 ? (
@@ -150,7 +153,7 @@ export function EmployeeSelector({
         ) : (
           <ScrollArea className="border rounded-md h-64">
             <div className="p-2 space-y-1">
-              {[...allEmployees].sort((a,b) => a.name.localeCompare(b.name)).map((employee) => (
+              {allEmployees.map((employee) => (
                 <div key={employee.id} className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50 text-sm">
                   <span className="text-foreground">{employee.name}</span>
                   <Button

@@ -51,7 +51,7 @@ const MOCK_EMPLOYEES_DATA: Employee[] = [
 
 
 export default function RafflePage() {
-  const [allEmployees, setAllEmployees] = _React.useState<Employee[]>(MOCK_EMPLOYEES_DATA);
+  const [allEmployees, setAllEmployees] = _React.useState<Employee[]>(() => MOCK_EMPLOYEES_DATA.sort((a,b) => a.name.localeCompare(b.name)));
   const [rafflePool, setRafflePool] = _React.useState<Employee[]>([]);
   const [winner, setWinner] = _React.useState<Employee | null>(null);
   const [isDrawing, setIsDrawing] = _React.useState<boolean>(false);
@@ -84,7 +84,7 @@ export default function RafflePage() {
     const employeeToRemove = allEmployees.find(emp => emp.id === employeeId);
     if (!employeeToRemove) return;
 
-    setAllEmployees(prev => prev.filter(emp => emp.id !== employeeId));
+    setAllEmployees(prev => prev.filter(emp => emp.id !== employeeId).sort((a, b) => a.name.localeCompare(b.name)));
     setRafflePool(prev => prev.filter(emp => emp.id !== employeeId));
 
     toast({
