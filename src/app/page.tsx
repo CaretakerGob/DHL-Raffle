@@ -36,7 +36,7 @@ const MOCK_EMPLOYEES_DATA: Employee[] = [
 ];
 
 export default function RafflePage() {
-  const [_allEmployees, setAllEmployees] = _React.useState<Employee[]>(MOCK_EMPLOYEES_DATA);
+  const [allEmployees, setAllEmployees] = _React.useState<Employee[]>(MOCK_EMPLOYEES_DATA);
   const [rafflePool, setRafflePool] = _React.useState<Employee[]>([]);
   const [winner, setWinner] = _React.useState<Employee | null>(null);
   const [isDrawing, setIsDrawing] = _React.useState<boolean>(false);
@@ -45,14 +45,18 @@ export default function RafflePage() {
   const modalTimerRef = _React.useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
 
-  const handleAddEmployee = (employeeId: string) => {
-    const employeeToAdd = _allEmployees.find((emp) => emp.id === employeeId);
+  const handleAddEmployeeToPool = (employeeId: string) => {
+    const employeeToAdd = allEmployees.find((emp) => emp.id === employeeId);
     if (employeeToAdd && !rafflePool.find((emp) => emp.id === employeeId)) {
       setRafflePool((prevPool) => [...prevPool, employeeToAdd]);
+       toast({
+        title: "Employee Added to Pool",
+        description: `${employeeToAdd.name} is now in the raffle!`,
+      });
     }
   };
 
-  const handleRemoveEmployee = (employeeId: string) => {
+  const handleRemoveEmployeeFromPool = (employeeId: string) => {
     const employeeToRemove = rafflePool.find(emp => emp.id === employeeId);
     setRafflePool((prevPool) => prevPool.filter((emp) => emp.id !== employeeId));
     if (employeeToRemove) {
@@ -82,6 +86,7 @@ export default function RafflePage() {
     }
     setShowConfetti(false);
 
+    // Non-error toast for drawing start
     toast({
       title: "Drawing Winner...",
       description: "Get ready to find out who the lucky employee is!",
@@ -94,24 +99,29 @@ export default function RafflePage() {
       setShowWinnerModal(true);
       setShowConfetti(true);
       setIsDrawing(false);
-      setRafflePool([]);
+      setRafflePool([]); // Clear pool after winner is drawn
       toast({
         title: "Winner Selected!",
         description: `Congratulations to ${newWinner.name}! The raffle pool has been cleared.`,
-        duration: 5000,
+        duration: 5000, // Longer duration for winner announcement
       });
 
+      // Timer to close modal
       modalTimerRef.current = setTimeout(() => {
         setShowWinnerModal(false);
-      }, 7000);
+      }, 7000); // Modal stays for 7 seconds
 
+      // Timer to stop confetti
+      // Ensure confetti runs a bit longer than the modal might be open or as long as the announcement toast
       setTimeout(() => {
         setShowConfetti(false);
-      }, 6000);
-    }, 2500);
+      }, 6000); // Confetti for 6 seconds
+
+    }, 2500); // Simulate drawing time
   };
 
   _React.useEffect(() => {
+    // Cleanup timer on component unmount
     return () => {
       if (modalTimerRef.current) {
         clearTimeout(modalTimerRef.current);
@@ -119,7 +129,7 @@ export default function RafflePage() {
     };
   }, []);
 
-  const availableToAdEmployees = _allEmployees.filter(
+  const availableToAddToPoolEmployees = allEmployees.filter(
     (emp) => !rafflePool.find((pEmp) => pEmp.id === emp.id)
   );
 
@@ -148,12 +158,14 @@ export default function RafflePage() {
         <main className="w-full max-w-xl space-y-6 sm:space-y-8">
           <Card className="shadow-lg bg-card/90 backdrop-blur-md border border-white/20">
             <CardHeader>
-              <CardTitle className="text-xl sm:text-2xl text-center sm:text-left">Add Employees to Raffle</CardTitle>
+              <CardTitle className="text-xl sm:text-2xl text-center sm:text-left">Manage Employees</CardTitle>
             </CardHeader>
             <CardContent>
               <EmployeeSelector
-                availableEmployees={availableToAdEmployees}
-                onAddEmployee={handleAddEmployee}
+                allEmployees={allEmployees}
+                setAllEmployees={setAllEmployees}
+                availableEmployeesForSelection={availableToAddToPoolEmployees}
+                onAddEmployeeToPool={handleAddEmployeeToPool}
               />
             </CardContent>
           </Card>
@@ -167,7 +179,7 @@ export default function RafflePage() {
             <CardContent>
               <RafflePool
                 pooledEmployees={rafflePool}
-                onRemoveEmployee={handleRemoveEmployee}
+                onRemoveEmployee={handleRemoveEmployeeFromPool}
               />
             </CardContent>
           </Card>
