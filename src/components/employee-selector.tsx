@@ -19,8 +19,7 @@ import {
 } from "@/components/ui/select";
 import { UserPlus, Search, PlusCircle, Trash2, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Card, CardContent } from "@/components/ui/card"; 
-import { ScrollArea } from "@/components/ui/scroll-area"; 
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface EmployeeSelectorProps {
   allEmployees: Employee[];
@@ -68,9 +67,9 @@ export function EmployeeSelector({
       title: "Employee Added to Pool",
       description: `${employee.name} is now in the raffle!`,
     });
-    setSearchTerm(""); 
-    setIsPopoverOpen(false); 
-    setStagedEmployeeIdForDropdown(""); 
+    setSearchTerm("");
+    setIsPopoverOpen(false);
+    setStagedEmployeeIdForDropdown("");
     if (inputRef.current) {
       inputRef.current.focus();
     }
@@ -88,7 +87,7 @@ export function EmployeeSelector({
         title: "Employee Added to Pool",
         description: `${employee.name} is now in the raffle!`,
       });
-      setStagedEmployeeIdForDropdown(""); 
+      setStagedEmployeeIdForDropdown("");
       if (inputRef.current) {
         inputRef.current.focus();
       }
@@ -120,7 +119,7 @@ export function EmployeeSelector({
     }
 
     const newEmployee: Employee = {
-      id: Date.now().toString() + '-' + Math.random().toString(36).substring(2, 7), 
+      id: Date.now().toString() + '-' + Math.random().toString(36).substring(2, 7),
       name: trimmedName,
     };
 
@@ -129,7 +128,7 @@ export function EmployeeSelector({
       title: "Employee Created",
       description: `${newEmployee.name} has been added to the system and is available for the raffle.`,
     });
-    setNewEmployeeNameInput(""); 
+    setNewEmployeeNameInput("");
   };
 
   const handleDeletePress = (employeeId: string, employeeName: string) => {
@@ -137,7 +136,7 @@ export function EmployeeSelector({
       onDeleteEmployeeSystemWide(employeeId);
     }
   };
-  
+
   React.useEffect(() => {
     const hasSearchTerm = searchTerm.length > 0;
     const hasAvailableEmployees = availableEmployeesForSelection.length > 0;
@@ -146,9 +145,8 @@ export function EmployeeSelector({
     if (hasSearchTerm && hasAvailableEmployees && hasFilteredResults) {
         setIsPopoverOpen(true);
     } else if (hasSearchTerm && hasAvailableEmployees && !hasFilteredResults) {
-        setIsPopoverOpen(true); // Keep open to show "No employees match..."
+        setIsPopoverOpen(true);
     } else if (!hasSearchTerm && hasAvailableEmployees) {
-        // If input is focused and empty, but there are employees, keep popover potentially open on click
         // setIsPopoverOpen(false); // Or true depending on desired UX for empty focused input
     }
      else {
@@ -173,7 +171,7 @@ export function EmployeeSelector({
                 onChange={handleSearchInputChange}
                  onClick={() => {
                   if (availableEmployeesForSelection.length > 0 || searchTerm.length > 0) {
-                    setIsPopoverOpen(true); 
+                    setIsPopoverOpen(true);
                   }
                 }}
                 className="pl-8 w-full"
@@ -185,12 +183,12 @@ export function EmployeeSelector({
           </PopoverTrigger>
           <PopoverContent
             id="employee-prediction-list"
-            className="w-[--radix-popover-trigger-width] p-0" 
+            className="w-[--radix-popover-trigger-width] p-0"
             align="start"
           >
             {(() => {
-              if (!isPopoverOpen) return null; 
-              
+              if (!isPopoverOpen) return null;
+
               if (availableEmployeesForSelection.length === 0 && searchTerm.length === 0) {
                 return <p className="p-3 text-sm text-muted-foreground">No employees in system to add.</p>;
               }
@@ -200,16 +198,16 @@ export function EmployeeSelector({
 
               const listToDisplay = searchTerm.length > 0 ? filteredEmployeesForSearch : sortedAvailableEmployeesForDropdown;
 
-              if (listToDisplay.length === 0 && searchTerm.length === 0) { 
+              if (listToDisplay.length === 0 && searchTerm.length === 0) {
                  return <p className="p-3 text-sm text-muted-foreground">Type to search or use the dropdown below.</p>;
               }
-              
-              if (listToDisplay.length === 0) { 
+
+              if (listToDisplay.length === 0) {
                 return <p className="p-3 text-sm text-muted-foreground">No available employees to add to pool.</p>;
               }
 
               return (
-                <ScrollArea className="max-h-60"> 
+                <ScrollArea className="max-h-60">
                   <div role="listbox" className="py-1">
                     {listToDisplay.map((employee) => (
                       <div
@@ -239,13 +237,13 @@ export function EmployeeSelector({
 
         <Select
           onValueChange={handleDropdownSelect}
-          value={stagedEmployeeIdForDropdown} 
+          value={stagedEmployeeIdForDropdown}
           disabled={sortedAvailableEmployeesForDropdown.length === 0}
         >
           <SelectTrigger className="w-full">
             <SelectValue placeholder="Select an employee directly..." />
           </SelectTrigger>
-          <SelectContent> 
+          <SelectContent>
             {sortedAvailableEmployeesForDropdown.length === 0 ? (
               <SelectItem value="no-employees" disabled>All available employees are in the pool or none exist.</SelectItem>
             ) : (
@@ -283,23 +281,21 @@ export function EmployeeSelector({
             No employees in the system yet. Add one using the form above!
           </p>
         ) : (
-          <ScrollArea className="max-h-72 border rounded-md"> 
-            <div className="p-1 space-y-1">
+          <ScrollArea className="max-h-72 border rounded-md">
+            <div className="p-2 space-y-2">
               {allEmployees.sort((a,b) => a.name.localeCompare(b.name)).map((employee) => (
-                <Card key={employee.id} className="bg-card shadow-xs">
-                  <CardContent className="p-2 flex items-center justify-between">
-                    <span className="text-card-foreground text-sm">{employee.name}</span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7"
-                      onClick={() => handleDeletePress(employee.id, employee.name)}
-                      aria-label={`Remove ${employee.name} from system`}
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive hover:text-destructive/80" />
-                    </Button>
-                  </CardContent>
-                </Card>
+                <div key={employee.id} className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50">
+                  <span className="text-foreground text-sm">{employee.name}</span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-destructive hover:text-destructive/80"
+                    onClick={() => handleDeletePress(employee.id, employee.name)}
+                    aria-label={`Remove ${employee.name} from system`}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               ))}
             </div>
           </ScrollArea>
@@ -308,7 +304,4 @@ export function EmployeeSelector({
     </div>
   );
 }
-
-    
-
     
