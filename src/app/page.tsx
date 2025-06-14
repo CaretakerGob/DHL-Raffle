@@ -21,37 +21,29 @@ import type { Employee } from "@/types/employee";
 import { useToast } from "@/hooks/use-toast";
 import { Settings, Trophy } from "lucide-react";
 
-const MOCK_EMPLOYEES_DATA: Employee[] = [
-  { id: '1', name: 'Alice Wonderland' },
-  { id: '2', name: 'Bob The Builder' },
-  { id: '3', name: 'Charlie Brown' },
-  { id: '4', name: 'Diana Prince' },
-  { id: '5', name: 'Edward Scissorhands' },
-  { id: '6', name: 'Fiona Gallagher' },
-  { id: '7', name: 'George Jetson' },
-  { id: '8', name: 'Hannah Montana' },
-  { id: '9', name: 'Ian Malcolm' },
-  { id: '10', name: 'Julia Child' },
-  { id: '11', name: 'Katherine Hepburn' },
-  { id: '12', name: 'Louis Armstrong' },
-  { id: '13', name: 'Marie Curie' },
-  { id: '14', name: 'Nikola Tesla' },
-  { id: '15', name: 'Oscar Wilde' },
-  { id: '16', name: 'Pablo Picasso' },
-  { id: '17', name: 'Queen Elizabeth' },
-  { id: '18', name: 'Rembrandt van Rijn' },
-  { id: '19', name: 'Simone de Beauvoir' },
-  { id: '20', name: 'Thomas Edison' },
-  { id: '21', name: 'Ursula K. Le Guin' },
-  { id: '22', name: 'Vincent van Gogh' },
-  { id: '23', name: 'Wolfgang Mozart' },
-  { id: '24', name: 'Xiaoming Li' },
-  { id: '25', name: 'Yoko Ono' },
+// Helper to generate unique IDs for mock data
+const generateId = (prefix: string, index: number): string => {
+  return `${prefix}-${index + 1}-${Date.now().toString(36).slice(-4)}-${Math.random().toString(36).slice(2, 6)}`;
+};
+
+const RAW_EMPLOYEE_NAMES: string[] = [
+  'Alice Wonderland', 'Bob The Builder', 'Charlie Brown', 'Diana Prince', 'Edward Scissorhands',
+  'Fiona Gallagher', 'George Jetson', 'Hannah Montana', 'Ian Malcolm', 'Julia Child',
+  'Katherine Hepburn', 'Louis Armstrong', 'Marie Curie', 'Nikola Tesla', 'Oscar Wilde',
+  'Pablo Picasso', 'Queen Elizabeth', 'Rembrandt van Rijn', 'Simone de Beauvoir', 'Thomas Edison',
+  'Ursula K. Le Guin', 'Vincent van Gogh', 'Wolfgang Mozart', 'Xiaoming Li', 'Yoko Ono'
 ];
+
+const MOCK_EMPLOYEES_DATA: Employee[] = RAW_EMPLOYEE_NAMES.map((name, index) => ({
+  id: generateId('emp', index),
+  name: name,
+}));
 
 
 export default function RafflePage() {
-  const [allEmployees, setAllEmployees] = _React.useState<Employee[]>(() => [...MOCK_EMPLOYEES_DATA].sort((a,b) => a.name.localeCompare(b.name)));
+  const [allEmployees, setAllEmployees] = _React.useState<Employee[]>(() => 
+    [...MOCK_EMPLOYEES_DATA].sort((a,b) => a.name.localeCompare(b.name))
+  );
   const [rafflePool, setRafflePool] = _React.useState<Employee[]>([]);
   const [winner, setWinner] = _React.useState<Employee | null>(null);
   const [isDrawing, setIsDrawing] = _React.useState<boolean>(false);
@@ -81,24 +73,36 @@ export default function RafflePage() {
   };
 
   const handleDeleteEmployeeSystemWide = (employeeId: string) => {
-    const employeeToRemove = allEmployees.find(emp => emp.id === employeeId);
-    if (!employeeToRemove) return;
+    let removedEmployeeName: string | undefined;
 
     setAllEmployees(prevAllEmployees => {
-        const filteredEmployees = prevAllEmployees.filter(emp => emp.id !== employeeId);
-        // Sort the new filtered array
-        return filteredEmployees.sort((a, b) => a.name.localeCompare(b.name));
+      const employeeInPrev = prevAllEmployees.find(emp => emp.id === employeeId);
+      if (!employeeInPrev) {
+        console.warn(`Employee with ID ${employeeId} not found in prevAllEmployees.`);
+        return prevAllEmployees; // Employee not found, return original state
+      }
+      removedEmployeeName = employeeInPrev.name; // Capture name before filtering
+
+      // Filter out the employee. Since the list is always kept sorted,
+      // the filtered list will also be sorted.
+      const filteredEmployees = prevAllEmployees.filter(emp => emp.id !== employeeId);
+      return filteredEmployees;
     });
 
-    setRafflePool(prevRafflePool => 
-        prevRafflePool.filter(emp => emp.id !== employeeId)
+    setRafflePool(prevRafflePool =>
+      prevRafflePool.filter(emp => emp.id !== employeeId)
     );
 
-    toast({
-      title: "Employee Removed",
-      description: `${employeeToRemove.name} has been removed from the system and the raffle pool.`,
-      variant: "destructive",
-    });
+    if (removedEmployeeName) {
+      toast({
+        title: "Employee Removed",
+        description: `${removedEmployeeName} has been removed from the system and the raffle pool.`,
+        variant: "destructive",
+      });
+    } else {
+      // This case should ideally not be hit if the employee was found and removed.
+      console.warn("Employee removal processed but name not captured for toast. This may indicate the employee was not found in the state update.");
+    }
   };
 
 
@@ -211,7 +215,7 @@ export default function RafflePage() {
                 <div className="px-6 pb-6">
                   <EmployeeSelector
                     allEmployees={allEmployees}
-                    setAllEmployees={setAllEmployees}
+                    setAllEmployees={setAllEmployees} // This prop is used for adding new employees
                     availableEmployeesForSelection={availableToAddToPoolEmployees}
                     onAddEmployeeToPool={handleAddEmployeeToPool}
                     onDeleteEmployeeSystemWide={handleDeleteEmployeeSystemWide}
@@ -283,3 +287,4 @@ export default function RafflePage() {
     </div>
   );
 }
+
