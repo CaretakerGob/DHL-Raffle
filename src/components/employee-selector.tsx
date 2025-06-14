@@ -158,7 +158,7 @@ export function EmployeeSelector({
 
 
   return (
-    <div className="space-y-6 px-1">
+    <div className="space-y-6">
       <div>
         <h3 className="text-sm font-medium mb-2 text-muted-foreground flex items-center"><UserPlus className="mr-2 h-4 w-4" />Add Existing Employee to Pool</h3>
         <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
@@ -172,7 +172,6 @@ export function EmployeeSelector({
                 value={searchTerm}
                 onChange={handleSearchInputChange}
                  onClick={() => {
-                  // Open if there are employees to show or if search term exists (to show no results)
                   if (availableEmployeesForSelection.length > 0 || searchTerm.length > 0) {
                     setIsPopoverOpen(true); 
                   }
@@ -309,5 +308,7 @@ export function EmployeeSelector({
     </div>
   );
 }
+
+    
 
     
