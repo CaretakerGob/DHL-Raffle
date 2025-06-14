@@ -31,9 +31,10 @@ const RAW_EMPLOYEE_NAMES: string[] = [
   'Fiona Gallagher', 'George Jetson', 'Hannah Montana', 'Ian Malcolm', 'Julia Child',
   'Katherine Hepburn', 'Louis Armstrong', 'Marie Curie', 'Nikola Tesla', 'Oscar Wilde',
   'Pablo Picasso', 'Queen Elizabeth', 'Rembrandt van Rijn', 'Simone de Beauvoir', 'Thomas Edison',
-  'Ursula K. Le Guin', 'Vincent van Gogh', 'Wolfgang Mozart', 'Xiaoming Li', 'Yoko Ono'
+  'Ursula K. Le Guin', 'Vincent van Gogh', 'Wolfgang Mozart', 'Xiaoming Li', 'Yoko Ono Zee'
 ];
 
+// Ensure MOCK_EMPLOYEES_DATA has unique IDs
 const MOCK_EMPLOYEES_DATA: Employee[] = RAW_EMPLOYEE_NAMES.map((name, index) => ({
   id: generateId('emp', index),
   name: name,
@@ -42,6 +43,7 @@ const MOCK_EMPLOYEES_DATA: Employee[] = RAW_EMPLOYEE_NAMES.map((name, index) => 
 
 export default function RafflePage() {
   const [allEmployees, setAllEmployees] = _React.useState<Employee[]>(() => 
+    // Sort a COPY of the mock data for initial state
     [...MOCK_EMPLOYEES_DATA].sort((a,b) => a.name.localeCompare(b.name))
   );
   const [rafflePool, setRafflePool] = _React.useState<Employee[]>([]);
@@ -73,35 +75,33 @@ export default function RafflePage() {
   };
 
   const handleDeleteEmployeeSystemWide = (employeeId: string) => {
-    let removedEmployeeName: string | undefined;
+    let employeeNameForToast: string | undefined;
 
     setAllEmployees(prevAllEmployees => {
-      const employeeInPrev = prevAllEmployees.find(emp => emp.id === employeeId);
-      if (!employeeInPrev) {
-        console.warn(`Employee with ID ${employeeId} not found in prevAllEmployees.`);
-        return prevAllEmployees; // Employee not found, return original state
+      const employeeToRemove = prevAllEmployees.find(emp => emp.id === employeeId);
+      if (employeeToRemove) {
+        employeeNameForToast = employeeToRemove.name;
       }
-      removedEmployeeName = employeeInPrev.name; // Capture name before filtering
-
-      // Filter out the employee. Since the list is always kept sorted,
-      // the filtered list will also be sorted.
-      const filteredEmployees = prevAllEmployees.filter(emp => emp.id !== employeeId);
-      return filteredEmployees;
+      // Filtering creates a new array. The list is kept sorted, so no need to re-sort here.
+      return prevAllEmployees.filter(emp => emp.id !== employeeId);
     });
 
-    setRafflePool(prevRafflePool =>
-      prevRafflePool.filter(emp => emp.id !== employeeId)
-    );
+    setRafflePool(prevPool => prevPool.filter(emp => emp.id !== employeeId));
 
-    if (removedEmployeeName) {
+    if (employeeNameForToast) {
       toast({
         title: "Employee Removed",
-        description: `${removedEmployeeName} has been removed from the system and the raffle pool.`,
+        description: `${employeeNameForToast} has been removed from the system and the raffle pool.`,
         variant: "destructive",
       });
     } else {
-      // This case should ideally not be hit if the employee was found and removed.
-      console.warn("Employee removal processed but name not captured for toast. This may indicate the employee was not found in the state update.");
+      // This case implies the employee was not found in the prevAllEmployees state during the update.
+      // Could happen if the action was somehow duplicated or list was already modified.
+      toast({
+        title: "Notice",
+        description: `Employee with ID ${employeeId} was not found for removal, or was already removed.`,
+        variant: "destructive", // Kept as destructive for visibility, could be default
+      });
     }
   };
 
@@ -137,7 +137,7 @@ export default function RafflePage() {
       setShowConfetti(true);
       setIsDrawing(false);
 
-      setRafflePool([]);
+      setRafflePool([]); // Clear pool after drawing
 
       toast({
         title: "Winner Selected!",
@@ -215,7 +215,7 @@ export default function RafflePage() {
                 <div className="px-6 pb-6">
                   <EmployeeSelector
                     allEmployees={allEmployees}
-                    setAllEmployees={setAllEmployees} // This prop is used for adding new employees
+                    setAllEmployees={setAllEmployees} 
                     availableEmployeesForSelection={availableToAddToPoolEmployees}
                     onAddEmployeeToPool={handleAddEmployeeToPool}
                     onDeleteEmployeeSystemWide={handleDeleteEmployeeSystemWide}
@@ -287,4 +287,3 @@ export default function RafflePage() {
     </div>
   );
 }
-
