@@ -51,7 +51,7 @@ export function EmployeeSelector({
         title: "Employee Added to Pool",
         description: `${employee.name} is now in the raffle!`,
       });
-      setStagedEmployeeIdForDropdown("");
+      setStagedEmployeeIdForDropdown(""); 
     }
   };
 
@@ -148,7 +148,7 @@ export function EmployeeSelector({
             No employees in the system yet. Add one using the form above!
           </p>
         ) : (
-          <ScrollArea className="max-h-72 border rounded-md">
+          <ScrollArea className="max-h-64 border rounded-md"> {/* Adjusted max-h-72 to max-h-64 */}
             <div className="p-2 space-y-2">
               {allEmployees.sort((a,b) => a.name.localeCompare(b.name)).map((employee) => (
                 <div key={employee.id} className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50">
