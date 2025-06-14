@@ -84,8 +84,15 @@ export default function RafflePage() {
     const employeeToRemove = allEmployees.find(emp => emp.id === employeeId);
     if (!employeeToRemove) return;
 
-    setAllEmployees(prev => prev.filter(emp => emp.id !== employeeId).sort((a, b) => a.name.localeCompare(b.name)));
-    setRafflePool(prev => prev.filter(emp => emp.id !== employeeId));
+    setAllEmployees(prevAllEmployees => {
+        const filteredEmployees = prevAllEmployees.filter(emp => emp.id !== employeeId);
+        const newSortedEmployees = [...filteredEmployees].sort((a, b) => a.name.localeCompare(b.name));
+        return newSortedEmployees;
+    });
+
+    setRafflePool(prevRafflePool => {
+        return prevRafflePool.filter(emp => emp.id !== employeeId);
+    });
 
     toast({
       title: "Employee Removed",
