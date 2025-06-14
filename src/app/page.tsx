@@ -11,6 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { EmployeeSelector } from "@/components/employee-selector";
 import { RafflePool } from "@/components/raffle-pool";
@@ -18,7 +19,7 @@ import { WinnerDisplay } from "@/components/winner-display";
 import { Confetti } from "@/components/confetti";
 import type { Employee } from "@/types/employee";
 import { useToast } from "@/hooks/use-toast";
-import { Trophy } from "lucide-react";
+import { Settings, Trophy } from "lucide-react";
 
 const MOCK_EMPLOYEES_DATA: Employee[] = [
   { id: '1', name: 'Alice Wonderland' },
@@ -42,6 +43,7 @@ export default function RafflePage() {
   const [isDrawing, setIsDrawing] = _React.useState<boolean>(false);
   const [showConfetti, setShowConfetti] = _React.useState<boolean>(false);
   const [showWinnerModal, setShowWinnerModal] = _React.useState<boolean>(false);
+  const [showManageEmployeesModal, setShowManageEmployeesModal] = _React.useState<boolean>(false);
   const modalTimerRef = _React.useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
 
@@ -69,7 +71,7 @@ export default function RafflePage() {
     if (!employeeToRemove) return;
 
     setAllEmployees(prev => prev.filter(emp => emp.id !== employeeId));
-    setRafflePool(prev => prev.filter(emp => emp.id !== employeeId)); // Also remove from pool
+    setRafflePool(prev => prev.filter(emp => emp.id !== employeeId)); 
 
     toast({
       title: "Employee Removed",
@@ -110,8 +112,6 @@ export default function RafflePage() {
       setShowConfetti(true);
       setIsDrawing(false);
       
-      // Clear pool and also remove winner from allEmployees list to prevent re-drawing
-      // setAllEmployees(prev => prev.filter(emp => emp.id !== newWinner.id)); // Optional: remove winner from main list
       setRafflePool([]); 
       
       toast({
@@ -152,8 +152,8 @@ export default function RafflePage() {
       />
       <div className="absolute inset-0 bg-background/50" />
 
-      <div className="relative z-10 flex flex-col items-center py-20 sm:py-24 px-4">
-        <header className="mb-8 sm:mb-10 flex flex-col items-center">
+      <div className="relative z-10 flex flex-col items-center py-12 sm:py-16 px-4">
+        <header className="mb-6 sm:mb-8 flex flex-col items-center">
           <div className="bg-card/90 backdrop-blur-sm py-2 px-3 rounded-lg shadow-xl border border-white/20 flex flex-col items-center">
             <Image
               src="/DHL-raffle-Logo.png"
@@ -161,25 +161,43 @@ export default function RafflePage() {
               width={350}
               height={105}
               priority
+              className="mb-1" 
             />
           </div>
         </header>
 
         <main className="w-full max-w-xl space-y-6 sm:space-y-8">
-          <Card className="shadow-lg bg-card/90 backdrop-blur-md border border-white/20">
-            <CardHeader>
-              <CardTitle className="text-xl sm:text-2xl text-center sm:text-left">Manage Employees</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <EmployeeSelector
-                allEmployees={allEmployees}
-                setAllEmployees={setAllEmployees}
-                availableEmployeesForSelection={availableToAddToPoolEmployees}
-                onAddEmployeeToPool={handleAddEmployeeToPool}
-                onDeleteEmployeeSystemWide={handleDeleteEmployeeSystemWide}
-              />
-            </CardContent>
-          </Card>
+          <div className="text-center">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowManageEmployeesModal(true)}
+              className="bg-card/90 backdrop-blur-md hover:bg-card/70 border-white/20 shadow-md"
+            >
+              <Settings className="mr-2 h-5 w-5" />
+              Manage Employees
+            </Button>
+          </div>
+          
+          <Dialog open={showManageEmployeesModal} onOpenChange={setShowManageEmployeesModal}>
+            <DialogContent className="sm:max-w-lg bg-card/95 backdrop-blur-xl border-white/20 max-h-[80vh] flex flex-col">
+              <DialogHeader>
+                <DialogTitle className="text-xl sm:text-2xl">Manage Employees</DialogTitle>
+                <DialogDescription>
+                  Add, create, or remove employees from the system.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="overflow-y-auto flex-grow pr-2 -mr-2"> {/* Added for scrollability */}
+                <EmployeeSelector
+                  allEmployees={allEmployees}
+                  setAllEmployees={setAllEmployees}
+                  availableEmployeesForSelection={availableToAddToPoolEmployees}
+                  onAddEmployeeToPool={handleAddEmployeeToPool}
+                  onDeleteEmployeeSystemWide={handleDeleteEmployeeSystemWide}
+                />
+              </div>
+            </DialogContent>
+          </Dialog>
+
 
           <Card className="shadow-lg bg-card/90 backdrop-blur-md border border-white/20">
             <CardHeader>
