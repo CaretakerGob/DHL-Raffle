@@ -6,18 +6,13 @@ import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { UserPlus, Search, PlusCircle, Trash2, Users } from "lucide-react";
+import { UserPlus, PlusCircle, Trash2, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -36,44 +31,13 @@ export function EmployeeSelector({
   onAddEmployeeToPool,
   onDeleteEmployeeSystemWide
 }: EmployeeSelectorProps) {
-  const [searchTerm, setSearchTerm] = React.useState<string>("");
   const [stagedEmployeeIdForDropdown, setStagedEmployeeIdForDropdown] = React.useState<string>("");
-  const [isPopoverOpen, setIsPopoverOpen] = React.useState(false);
   const [newEmployeeNameInput, setNewEmployeeNameInput] = React.useState<string>("");
-  const inputRef = React.useRef<HTMLInputElement>(null);
   const { toast } = useToast();
-
-  const filteredEmployeesForSearch = availableEmployeesForSelection.filter(employee =>
-    employee.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   const sortedAvailableEmployeesForDropdown = React.useMemo(() => {
     return [...availableEmployeesForSelection].sort((a, b) => a.name.localeCompare(b.name));
   }, [availableEmployeesForSelection]);
-
-  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const term = e.target.value;
-    setSearchTerm(term);
-    if (term.length > 0 && availableEmployeesForSelection.length > 0) {
-      setIsPopoverOpen(true);
-    } else {
-      setIsPopoverOpen(false);
-    }
-  };
-
-  const handleEmployeeSelect = (employee: Employee) => {
-    onAddEmployeeToPool(employee.id);
-    toast({
-      title: "Employee Added to Pool",
-      description: `${employee.name} is now in the raffle!`,
-    });
-    setSearchTerm("");
-    setIsPopoverOpen(false);
-    setStagedEmployeeIdForDropdown("");
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
-  };
 
   const handleDropdownSelect = (employeeId: string) => {
     if (!employeeId) {
@@ -88,9 +52,6 @@ export function EmployeeSelector({
         description: `${employee.name} is now in the raffle!`,
       });
       setStagedEmployeeIdForDropdown("");
-      if (inputRef.current) {
-        inputRef.current.focus();
-      }
     }
   };
 
@@ -137,104 +98,10 @@ export function EmployeeSelector({
     }
   };
 
-  React.useEffect(() => {
-    const hasSearchTerm = searchTerm.length > 0;
-    const hasAvailableEmployees = availableEmployeesForSelection.length > 0;
-    const hasFilteredResults = filteredEmployeesForSearch.length > 0;
-
-    if (hasSearchTerm && hasAvailableEmployees && hasFilteredResults) {
-        setIsPopoverOpen(true);
-    } else if (hasSearchTerm && hasAvailableEmployees && !hasFilteredResults) {
-        setIsPopoverOpen(true);
-    } else if (!hasSearchTerm && hasAvailableEmployees) {
-        // setIsPopoverOpen(false); // Or true depending on desired UX for empty focused input
-    }
-     else {
-        setIsPopoverOpen(false);
-    }
-  }, [searchTerm, filteredEmployeesForSearch.length, availableEmployeesForSelection.length]);
-
-
   return (
     <div className="space-y-6">
       <div>
         <h3 className="text-sm font-medium mb-2 text-muted-foreground flex items-center"><UserPlus className="mr-2 h-4 w-4" />Add Existing Employee to Pool</h3>
-        <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
-          <PopoverTrigger asChild>
-            <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                ref={inputRef}
-                type="search"
-                placeholder="Search available employees..."
-                value={searchTerm}
-                onChange={handleSearchInputChange}
-                 onClick={() => {
-                  if (availableEmployeesForSelection.length > 0 || searchTerm.length > 0) {
-                    setIsPopoverOpen(true);
-                  }
-                }}
-                className="pl-8 w-full"
-                aria-autocomplete="list"
-                aria-expanded={isPopoverOpen}
-                aria-controls="employee-prediction-list"
-              />
-            </div>
-          </PopoverTrigger>
-          <PopoverContent
-            id="employee-prediction-list"
-            className="w-[--radix-popover-trigger-width] p-0"
-            align="start"
-          >
-            {(() => {
-              if (!isPopoverOpen) return null;
-
-              if (availableEmployeesForSelection.length === 0 && searchTerm.length === 0) {
-                return <p className="p-3 text-sm text-muted-foreground">No employees in system to add.</p>;
-              }
-              if (searchTerm.length > 0 && filteredEmployeesForSearch.length === 0) {
-                 return <p className="p-3 text-sm text-muted-foreground">No employees match your search.</p>;
-              }
-
-              const listToDisplay = searchTerm.length > 0 ? filteredEmployeesForSearch : sortedAvailableEmployeesForDropdown;
-
-              if (listToDisplay.length === 0 && searchTerm.length === 0) {
-                 return <p className="p-3 text-sm text-muted-foreground">Type to search or use the dropdown below.</p>;
-              }
-
-              if (listToDisplay.length === 0) {
-                return <p className="p-3 text-sm text-muted-foreground">No available employees to add to pool.</p>;
-              }
-
-              return (
-                <ScrollArea className="max-h-60">
-                  <div role="listbox" className="py-1">
-                    {listToDisplay.map((employee) => (
-                      <div
-                        key={employee.id}
-                        onClick={() => handleEmployeeSelect(employee)}
-                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleEmployeeSelect(employee); }}}
-                        tabIndex={0}
-                        role="option"
-                        aria-selected={stagedEmployeeIdForDropdown === employee.id}
-                        className="cursor-pointer px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground outline-none rounded-sm"
-                      >
-                        {employee.name}
-                      </div>
-                    ))}
-                  </div>
-                </ScrollArea>
-              );
-            })()}
-          </PopoverContent>
-        </Popover>
-
-        <div className="flex items-center text-xs text-muted-foreground uppercase my-3">
-          <div className="flex-grow border-t border-muted"></div>
-          <span className="mx-2">Or</span>
-          <div className="flex-grow border-t border-muted"></div>
-        </div>
-
         <Select
           onValueChange={handleDropdownSelect}
           value={stagedEmployeeIdForDropdown}
@@ -304,4 +171,3 @@ export function EmployeeSelector({
     </div>
   );
 }
-    
