@@ -265,7 +265,7 @@ export function EmployeeSelector({
             onKeyDown={(e) => { if (e.key === 'Enter') handleCreateAndAddEmployee();}}
             className="flex-grow"
           />
-          <Button onClick={handleCreateAndAddEmployee} variant="outline">
+          <Button onClick={handleCreateAndAddEmployee} variant="default">
             Create & Add
           </Button>
         </div>
