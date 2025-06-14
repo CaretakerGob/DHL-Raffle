@@ -52,7 +52,7 @@ const MOCK_EMPLOYEES_DATA: Employee[] = [
 
 export default function RafflePage() {
   const [allEmployees, setAllEmployees] = _React.useState<Employee[]>(MOCK_EMPLOYEES_DATA);
-  const [rafflePool, setRfflePool] = _React.useState<Employee[]>([]);
+  const [rafflePool, setRafflePool] = _React.useState<Employee[]>([]);
   const [winner, setWinner] = _React.useState<Employee | null>(null);
   const [isDrawing, setIsDrawing] = _React.useState<boolean>(false);
   const [showConfetti, setShowConfetti] = _React.useState<boolean>(false);
@@ -64,14 +64,14 @@ export default function RafflePage() {
   const handleAddEmployeeToPool = (employeeId: string) => {
     const employeeToAdd = allEmployees.find((emp) => emp.id === employeeId);
     if (employeeToAdd && !rafflePool.find((emp) => emp.id === employeeId)) {
-      setRfflePool((prevPool) => [...prevPool, employeeToAdd]);
+      setRafflePool((prevPool) => [...prevPool, employeeToAdd]);
       // Toast is handled in EmployeeSelector
     }
   };
 
   const handleRemoveEmployeeFromPool = (employeeId: string) => {
     const employeeToRemove = rafflePool.find(emp => emp.id === employeeId);
-    setRfflePool((prevPool) => prevPool.filter((emp) => emp.id !== employeeId));
+    setRafflePool((prevPool) => prevPool.filter((emp) => emp.id !== employeeId));
     if (employeeToRemove) {
       toast({
         title: "Employee Removed from Pool",
@@ -85,7 +85,7 @@ export default function RafflePage() {
     if (!employeeToRemove) return;
 
     setAllEmployees(prev => prev.filter(emp => emp.id !== employeeId));
-    setRfflePool(prev => prev.filter(emp => emp.id !== employeeId)); 
+    setRafflePool(prev => prev.filter(emp => emp.id !== employeeId));
 
     toast({
       title: "Employee Removed",
@@ -125,24 +125,24 @@ export default function RafflePage() {
       setShowWinnerModal(true);
       setShowConfetti(true);
       setIsDrawing(false);
-      
-      setRfflePool([]); 
-      
+
+      setRafflePool([]);
+
       toast({
         title: "Winner Selected!",
         description: `Congratulations to ${newWinner.name}! The raffle pool has been cleared.`,
-        duration: 5000, 
+        duration: 5000,
       });
 
       modalTimerRef.current = setTimeout(() => {
         setShowWinnerModal(false);
-      }, 7000); 
+      }, 7000);
 
       setTimeout(() => {
         setShowConfetti(false);
       }, 6000);
 
-    }, 2500); 
+    }, 2500);
   };
 
   _React.useEffect(() => {
@@ -175,15 +175,15 @@ export default function RafflePage() {
               width={350}
               height={105}
               priority
-              className="mb-0" 
+              className="mb-0"
             />
           </div>
         </header>
 
         <main className="w-full max-w-xl space-y-6 sm:space-y-8">
           <div className="text-center">
-            <Button 
-              variant="default" 
+            <Button
+              variant="default"
               onClick={() => setShowManageEmployeesModal(true)}
               className="shadow-md"
             >
@@ -191,7 +191,7 @@ export default function RafflePage() {
               Manage Employees
             </Button>
           </div>
-          
+
           <Dialog open={showManageEmployeesModal} onOpenChange={setShowManageEmployeesModal}>
             <DialogContent className="sm:max-w-lg bg-card/95 backdrop-blur-xl border-primary max-h-[80vh] flex flex-col p-0">
               <DialogHeader className="p-6 pb-4">
@@ -276,4 +276,3 @@ export default function RafflePage() {
     </div>
   );
 }
-    
