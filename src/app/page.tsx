@@ -51,7 +51,7 @@ const MOCK_EMPLOYEES_DATA: Employee[] = [
 
 
 export default function RafflePage() {
-  const [allEmployees, setAllEmployees] = _React.useState<Employee[]>(() => MOCK_EMPLOYEES_DATA.sort((a,b) => a.name.localeCompare(b.name)));
+  const [allEmployees, setAllEmployees] = _React.useState<Employee[]>(() => [...MOCK_EMPLOYEES_DATA].sort((a,b) => a.name.localeCompare(b.name)));
   const [rafflePool, setRafflePool] = _React.useState<Employee[]>([]);
   const [winner, setWinner] = _React.useState<Employee | null>(null);
   const [isDrawing, setIsDrawing] = _React.useState<boolean>(false);
