@@ -45,14 +45,15 @@ export function EmployeeSelector({ availableEmployees, onAddEmployee }: Employee
     setSearchTerm(term);
     
     if (term === "") {
-      setStagedEmployee(null);
+      setStagedEmployee(null); // Clear staged employee if search term is empty
     } else {
-      if (stagedEmployee && stagedEmployee.name.toLowerCase() !== term.toLowerCase()) {
+      // If there was a staged employee and the search term changes to not match it, clear it
+      if (stagedEmployee && !stagedEmployee.name.toLowerCase().startsWith(term.toLowerCase())) {
         setStagedEmployee(null);
       }
     }
 
-    if (term.length > 0) {
+    if (term.length > 0 && filteredEmployees.length > 0) {
       setIsPopoverOpen(true);
     } else {
       setIsPopoverOpen(false);
@@ -60,9 +61,15 @@ export function EmployeeSelector({ availableEmployees, onAddEmployee }: Employee
   };
 
   const handleEmployeeSelect = (employee: Employee) => {
-    setStagedEmployee(employee);
-    setSearchTerm(employee.name); 
+    onAddEmployee(employee.id);
+    toast({
+      title: "Employee Added",
+      description: `${employee.name} has been added to the raffle.`,
+    });
+    setSearchTerm("");
+    setStagedEmployee(null); 
     setIsPopoverOpen(false); 
+    inputRef.current?.focus(); 
   };
 
   const handleDropdownSelect = (employeeId: string) => {
@@ -73,33 +80,28 @@ export function EmployeeSelector({ availableEmployees, onAddEmployee }: Employee
     }
     const employee = availableEmployees.find(emp => emp.id === employeeId);
     if (employee) {
-      handleEmployeeSelect(employee);
-    }
-  };
-
-  const handleAdd = () => {
-    if (stagedEmployee) {
-      onAddEmployee(stagedEmployee.id);
+      onAddEmployee(employee.id);
       toast({
         title: "Employee Added",
-        description: `${stagedEmployee.name} has been added to the raffle.`,
+        description: `${employee.name} has been added to the raffle.`,
       });
       setSearchTerm("");
-      setStagedEmployee(null);
-      setIsPopoverOpen(false);
-      inputRef.current?.focus(); 
+      setStagedEmployee(null); // This will reset the Select to its placeholder
+      inputRef.current?.focus();
     }
   };
   
   React.useEffect(() => {
-    if (isPopoverOpen && (searchTerm.length === 0 || (searchTerm.length > 0 && filteredEmployees.length === 0 && availableEmployees.length > 0))) {
-        if (availableEmployees.length > 0 && filteredEmployees.length === 0) {
-             // Keep popover open to show "No matches"
-        } else if (searchTerm.length === 0) {
-            setIsPopoverOpen(false);
-        }
+    if (searchTerm.length > 0 && filteredEmployees.length > 0 && !isPopoverOpen) {
+      setIsPopoverOpen(true);
+    } else if ((searchTerm.length === 0 || filteredEmployees.length === 0) && isPopoverOpen) {
+      if (searchTerm.length > 0 && filteredEmployees.length === 0 && availableEmployees.length > 0) {
+        // Keep popover open to show "No matches" if user is typing
+      } else {
+        setIsPopoverOpen(false);
+      }
     }
-  }, [searchTerm, filteredEmployees, isPopoverOpen, availableEmployees.length]);
+  }, [searchTerm, filteredEmployees, availableEmployees.length, isPopoverOpen]);
 
 
   return (
@@ -135,7 +137,9 @@ export function EmployeeSelector({ availableEmployees, onAddEmployee }: Employee
           }}
         >
           {(() => {
+            // Do not show popover content if search term is empty. Effect handles closing.
             if (searchTerm.length === 0) return null; 
+
             if (availableEmployees.length === 0) {
               return <p className="p-3 text-sm text-muted-foreground">All employees are already in the raffle pool.</p>;
             }
@@ -171,7 +175,7 @@ export function EmployeeSelector({ availableEmployees, onAddEmployee }: Employee
 
       <Select
         onValueChange={handleDropdownSelect}
-        value={stagedEmployee?.id ?? ""}
+        value={stagedEmployee?.id ?? ""} // Value is now controlled by stagedEmployee, which gets nulled after adding
         disabled={sortedAvailableEmployees.length === 0}
       >
         <SelectTrigger className="w-full">
@@ -189,14 +193,6 @@ export function EmployeeSelector({ availableEmployees, onAddEmployee }: Employee
           )}
         </SelectContent>
       </Select>
-
-      <Button 
-        onClick={handleAdd} 
-        disabled={!stagedEmployee || availableEmployees.length === 0} 
-        className="w-full mt-4"
-      >
-        <UserPlus className="mr-2 h-4 w-4" /> Add to Raffle
-      </Button>
     </div>
   );
 }
