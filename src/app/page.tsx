@@ -12,7 +12,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area"; // Added import
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { EmployeeSelector } from "@/components/employee-selector";
 import { RafflePool } from "@/components/raffle-pool";
 import { WinnerDisplay } from "@/components/winner-display";
@@ -32,21 +32,27 @@ const MOCK_EMPLOYEES_DATA: Employee[] = [
   { id: '8', name: 'Hannah Montana' },
   { id: '9', name: 'Ian Malcolm' },
   { id: '10', name: 'Julia Child' },
-  { id: '11', name: 'Nacho Cheese' },
-  { id: '12', name: 'Edgar Allen Poe' },
-  { id: '13', name: 'Walter White' },
-  { id: '14', name: 'Jesse Pinkman' },
-  { id: '15', name: 'Saul Goodman' },
-  { id: '16', name: 'Kim Wexler' },
-  { id: '17', name: 'Gus Fring' },
-  { id: '18', name: 'Mike Ehrmantraut' },
-  { id: '19', name: 'Skyler White' },
-  { id: '20', name: 'Hank Schrader' },
+  { id: '11', name: 'Katherine Hepburn' },
+  { id: '12', name: 'Louis Armstrong' },
+  { id: '13', name: 'Marie Curie' },
+  { id: '14', name: 'Nikola Tesla' },
+  { id: '15', name: 'Oscar Wilde' },
+  { id: '16', name: 'Pablo Picasso' },
+  { id: '17', name: 'Queen Elizabeth' },
+  { id: '18', name: 'Rembrandt van Rijn' },
+  { id: '19', name: 'Simone de Beauvoir' },
+  { id: '20', name: 'Thomas Edison' },
+  { id: '21', name: 'Ursula K. Le Guin' },
+  { id: '22', name: 'Vincent van Gogh' },
+  { id: '23', name: 'Wolfgang Mozart' },
+  { id: '24', name: 'Xiaoming Li' },
+  { id: '25', name: 'Yoko Ono' },
 ];
+
 
 export default function RafflePage() {
   const [allEmployees, setAllEmployees] = _React.useState<Employee[]>(MOCK_EMPLOYEES_DATA);
-  const [rafflePool, setRafflePool] = _React.useState<Employee[]>([]);
+  const [rafflePool, setRfflePool] = _React.useState<Employee[]>([]);
   const [winner, setWinner] = _React.useState<Employee | null>(null);
   const [isDrawing, setIsDrawing] = _React.useState<boolean>(false);
   const [showConfetti, setShowConfetti] = _React.useState<boolean>(false);
@@ -58,14 +64,14 @@ export default function RafflePage() {
   const handleAddEmployeeToPool = (employeeId: string) => {
     const employeeToAdd = allEmployees.find((emp) => emp.id === employeeId);
     if (employeeToAdd && !rafflePool.find((emp) => emp.id === employeeId)) {
-      setRafflePool((prevPool) => [...prevPool, employeeToAdd]);
+      setRfflePool((prevPool) => [...prevPool, employeeToAdd]);
       // Toast is handled in EmployeeSelector
     }
   };
 
   const handleRemoveEmployeeFromPool = (employeeId: string) => {
     const employeeToRemove = rafflePool.find(emp => emp.id === employeeId);
-    setRafflePool((prevPool) => prevPool.filter((emp) => emp.id !== employeeId));
+    setRfflePool((prevPool) => prevPool.filter((emp) => emp.id !== employeeId));
     if (employeeToRemove) {
       toast({
         title: "Employee Removed from Pool",
@@ -79,7 +85,7 @@ export default function RafflePage() {
     if (!employeeToRemove) return;
 
     setAllEmployees(prev => prev.filter(emp => emp.id !== employeeId));
-    setRafflePool(prev => prev.filter(emp => emp.id !== employeeId)); 
+    setRfflePool(prev => prev.filter(emp => emp.id !== employeeId)); 
 
     toast({
       title: "Employee Removed",
@@ -120,7 +126,7 @@ export default function RafflePage() {
       setShowConfetti(true);
       setIsDrawing(false);
       
-      setRafflePool([]); 
+      setRfflePool([]); 
       
       toast({
         title: "Winner Selected!",
@@ -194,8 +200,8 @@ export default function RafflePage() {
                   Add, create, or remove employees from the system.
                 </DialogDescription>
               </DialogHeader>
-              <ScrollArea className="flex-1"> {/* Changed div to ScrollArea and applied flex-1 */}
-                <div className="px-6 pb-6"> {/* Inner div for padding */}
+              <ScrollArea className="flex-1">
+                <div className="px-6 pb-6">
                   <EmployeeSelector
                     allEmployees={allEmployees}
                     setAllEmployees={setAllEmployees}
