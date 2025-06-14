@@ -21,7 +21,7 @@ import type { Employee } from "@/types/employee";
 import { useToast } from "@/hooks/use-toast";
 import { Settings, Trophy } from "lucide-react";
 
-const LOCAL_STORAGE_EMPLOYEES_KEY = 'dhlRaffleEmployeesV1';
+const LOCAL_STORAGE_EMPLOYEES_KEY = 'dhlRaffleEmployeesV2'; // Incremented key for new structure
 
 const generateId = (prefix: string, index: number): string => {
   const randomPart = Math.random().toString(36).substring(2, 10);
@@ -29,17 +29,38 @@ const generateId = (prefix: string, index: number): string => {
   return `${prefix}-${index + 1}-${timestampPart}-${randomPart}`;
 };
 
-const RAW_EMPLOYEE_NAMES: string[] = [
-  'Alice Wonderland', 'Bob The Builder', 'Charlie Brown', 'Diana Prince', 'Edward Scissorhands',
-  'Fiona Gallagher', 'George Jetson', 'Hannah Montana', 'Ian Malcolm', 'Julia Child',
-  'Katherine Hepburn', 'Louis Armstrong', 'Marie Curie', 'Nikola Tesla', 'Oscar Wilde',
-  'Pablo Picasso', 'Queen Elizabeth', 'Rembrandt van Rijn', 'Simone de Beauvoir', 'Thomas Edison',
-  'Ursula K. Le Guin', 'Vincent van Gogh', 'Wolfgang Mozart', 'Xiaoming Li', 'Yoko Ono Zee'
+const RAW_EMPLOYEE_NAMES_CATEGORIES: Array<{name: string, category: 'employee' | 'leadership'}> = [
+  { name: 'Alice Wonderland', category: 'leadership' },
+  { name: 'Bob The Builder', category: 'leadership' },
+  { name: 'Charlie Brown', category: 'leadership' },
+  { name: 'Diana Prince', category: 'leadership' },
+  { name: 'Edward Scissorhands', category: 'leadership' },
+  { name: 'Fiona Gallagher', category: 'employee' },
+  { name: 'George Jetson', category: 'employee' },
+  { name: 'Hannah Montana', category: 'employee' },
+  { name: 'Ian Malcolm', category: 'employee' },
+  { name: 'Julia Child', category: 'employee' },
+  { name: 'Katherine Hepburn', category: 'employee' },
+  { name: 'Louis Armstrong', category: 'employee' },
+  { name: 'Marie Curie', category: 'employee' },
+  { name: 'Nikola Tesla', category: 'employee' },
+  { name: 'Oscar Wilde', category: 'employee' },
+  { name: 'Pablo Picasso', category: 'employee' },
+  { name: 'Queen Elizabeth', category: 'employee' },
+  { name: 'Rembrandt van Rijn', category: 'employee' },
+  { name: 'Simone de Beauvoir', category: 'employee' },
+  { name: 'Thomas Edison', category: 'employee' },
+  { name: 'Ursula K. Le Guin', category: 'employee' },
+  { name: 'Vincent van Gogh', category: 'employee' },
+  { name: 'Wolfgang Mozart', category: 'employee' },
+  { name: 'Xiaoming Li', category: 'employee' },
+  { name: 'Yoko Ono Zee', category: 'employee' }
 ];
 
-const MOCK_EMPLOYEES_DATA: Employee[] = RAW_EMPLOYEE_NAMES.map((name, index) => ({
+const MOCK_EMPLOYEES_DATA: Employee[] = RAW_EMPLOYEE_NAMES_CATEGORIES.map((emp, index) => ({
   id: generateId('emp', index),
-  name: name,
+  name: emp.name,
+  category: emp.category,
 }));
 
 
@@ -63,7 +84,14 @@ export default function RafflePage() {
 
       if (storedEmployeesJson) {
         try {
-          const storedEmployees = JSON.parse(storedEmployeesJson);
+          let storedEmployees = JSON.parse(storedEmployeesJson) as Partial<Employee>[];
+          // Migration: Ensure all employees have a category
+          storedEmployees = storedEmployees.map(emp => ({
+            ...emp,
+            id: emp.id || generateId('migrated', Math.random()), // Ensure ID exists
+            name: emp.name || 'Unknown Employee', // Ensure name exists
+            category: emp.category || 'employee', // Default to 'employee' if missing
+          })) as Employee[];
           initialDataToSet = storedEmployees;
         } catch (error) {
           console.error("Error parsing employees from localStorage, falling back to mock data:", error);
@@ -104,7 +132,7 @@ export default function RafflePage() {
     }
   };
 
-  const handleDeleteEmployeeSystemWide = (employeeId: string) => {
+ const handleDeleteEmployeeSystemWide = (employeeId: string) => {
     let employeeNameForToast: string | undefined;
 
     setAllEmployees(prevAllEmployees => {
@@ -112,10 +140,9 @@ export default function RafflePage() {
       if (employeeFound) {
         employeeNameForToast = employeeFound.name;
       } else {
-        console.warn(`[RafflePage] handleDelete: Employee with ID ${employeeId} not found in current 'allEmployees' state for toast message.`);
+         console.warn(`[RafflePage] handleDelete: Employee with ID ${employeeId} not found in current 'allEmployees' state for toast message.`);
       }
       const newList = prevAllEmployees.filter(emp => emp.id !== employeeId);
-      // No need to re-sort if `allEmployees` is always kept sorted (which it should be)
       return newList;
     });
 
@@ -128,7 +155,6 @@ export default function RafflePage() {
         variant: "destructive",
       });
     } else {
-      // Fallback toast if the name couldn't be captured.
       toast({
         title: "Employee Removed",
         description: `An employee (ID: ${employeeId}) has been removed from the system and the raffle pool.`,
@@ -219,7 +245,6 @@ export default function RafflePage() {
               width={350}
               height={100}
               priority
-              className="mb-0"
               style={{ height: 'auto' }}
             />
           </div>
