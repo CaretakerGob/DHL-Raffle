@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 
 interface ConfettiPieceData {
   id: number;
@@ -26,41 +26,65 @@ interface ConfettiProps {
   active: boolean;
 }
 
-// Using theme colors and some standard festive colors
 const CONFETTI_COLORS = [
-  'hsl(var(--primary))',   // DHL Yellow
-  'hsl(var(--accent))',    // DHL Red
-  'hsl(0, 0%, 75%)',       // Silver-like
-  'hsl(50, 100%, 60%)',    // Gold-like
+  'hsl(var(--primary))',
+  'hsl(var(--accent))',
+  'hsl(0, 0%, 75%)',
+  'hsl(50, 100%, 60%)',
 ];
 
 export function Confetti({ count = 150, active }: ConfettiProps) {
   const [pieces, setPieces] = useState<ConfettiPieceData[]>([]);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     if (active) {
       const newPieces = Array.from({ length: count }).map((_, index) => ({
         id: index,
         initialX: Math.random() * 100,
-        animationDelay: Math.random() * 1.5, // Stagger start times up to 1.5s
+        animationDelay: Math.random() * 1.5,
         color: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
         rotation: Math.random() * 360,
       }));
       setPieces(newPieces);
     } else {
-      // Clear pieces when not active to allow re-triggering
-      // A small delay ensures fade-out animation completes before removal
       const timer = setTimeout(() => {
         setPieces([]);
-      }, 3500); // Should be slightly longer than animation duration
+      }, 3500);
       return () => clearTimeout(timer);
     }
   }, [active, count]);
 
-  if (!pieces.length && !active) { // Only render if there are pieces OR it's just been activated (pieces will be generated)
+  useEffect(() => {
+    if (active) {
+      if (!audioRef.current) {
+        // Ensure Kazoo.mp3 is in the public folder
+        audioRef.current = new Audio('/Kazoo.mp3');
+      }
+      audioRef.current.currentTime = 0; // Rewind if played before
+      audioRef.current.play().catch(error => {
+        console.error("Error playing audio:", error);
+        // Handle potential errors, e.g., browser restrictions on autoplay
+      });
+    } else {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+    }
+
+    // Cleanup audio on component unmount
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+    };
+  }, [active]);
+
+  if (!pieces.length && !active) {
     return null;
   }
-
 
   return (
     <div className="confetti-container" aria-hidden="true">
