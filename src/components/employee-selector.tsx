@@ -35,7 +35,6 @@ export function EmployeeSelector({
   const [newEmployeeNameInput, setNewEmployeeNameInput] = React.useState<string>("");
   const { toast } = useToast();
 
-  // availableEmployeesForSelection is already filtered, sort it for display
   const sortedAvailableEmployeesForDropdown = React.useMemo(() => {
     return [...availableEmployeesForSelection].sort((a, b) => a.name.localeCompare(b.name));
   }, [availableEmployeesForSelection]);
@@ -52,7 +51,7 @@ export function EmployeeSelector({
         title: "Employee Added to Pool",
         description: `${employee.name} is now in the raffle!`,
       });
-      setStagedEmployeeIdForDropdown(""); // Reset dropdown after selection
+      setStagedEmployeeIdForDropdown(""); 
     }
   };
 
@@ -85,8 +84,6 @@ export function EmployeeSelector({
       name: trimmedName,
     };
 
-    // The parent's setAllEmployees state setter (passed as 'setAllEmployees' prop)
-    // will handle adding and re-sorting the main list.
     setAllEmployees((prevAllEmployees) => [...prevAllEmployees, newEmployee].sort((a,b) => a.name.localeCompare(b.name)));
     toast({
       title: "Employee Created",
@@ -96,8 +93,12 @@ export function EmployeeSelector({
   };
 
   const handleDeletePress = (employeeId: string, employeeName: string) => {
+    console.log(`[EmployeeSelector] handleDeletePress called for: ${employeeName} (ID: ${employeeId})`);
     if (window.confirm(`Are you sure you want to permanently remove ${employeeName} from the system? This action cannot be undone.`)) {
+      console.log(`[EmployeeSelector] Confirmed deletion for: ${employeeName} (ID: ${employeeId})`);
       onDeleteEmployeeSystemWide(employeeId);
+    } else {
+      console.log(`[EmployeeSelector] Cancelled deletion for: ${employeeName} (ID: ${employeeId})`);
     }
   };
 

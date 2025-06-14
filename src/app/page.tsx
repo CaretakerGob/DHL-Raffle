@@ -34,7 +34,6 @@ const RAW_EMPLOYEE_NAMES: string[] = [
   'Ursula K. Le Guin', 'Vincent van Gogh', 'Wolfgang Mozart', 'Xiaoming Li', 'Yoko Ono Zee'
 ];
 
-// Ensure MOCK_EMPLOYEES_DATA has unique IDs
 const MOCK_EMPLOYEES_DATA: Employee[] = RAW_EMPLOYEE_NAMES.map((name, index) => ({
   id: generateId('emp', index),
   name: name,
@@ -43,7 +42,6 @@ const MOCK_EMPLOYEES_DATA: Employee[] = RAW_EMPLOYEE_NAMES.map((name, index) => 
 
 export default function RafflePage() {
   const [allEmployees, setAllEmployees] = _React.useState<Employee[]>(() => 
-    // Sort a COPY of the mock data for initial state
     [...MOCK_EMPLOYEES_DATA].sort((a,b) => a.name.localeCompare(b.name))
   );
   const [rafflePool, setRafflePool] = _React.useState<Employee[]>([]);
@@ -75,32 +73,40 @@ export default function RafflePage() {
   };
 
   const handleDeleteEmployeeSystemWide = (employeeId: string) => {
-    let employeeNameForToast: string | undefined;
+    console.log(`[RafflePage] handleDeleteEmployeeSystemWide called for ID: ${employeeId}`);
 
-    setAllEmployees(prevAllEmployees => {
-      const employeeToRemove = prevAllEmployees.find(emp => emp.id === employeeId);
-      if (employeeToRemove) {
-        employeeNameForToast = employeeToRemove.name;
-      }
-      // Filtering creates a new array. The list is kept sorted, so no need to re-sort here.
-      return prevAllEmployees.filter(emp => emp.id !== employeeId);
+    const employeeToRemove = allEmployees.find((emp) => emp.id === employeeId);
+
+    if (!employeeToRemove) {
+      console.warn(`[RafflePage] Employee with ID ${employeeId} not found in current allEmployees state for toast message.`);
+      // It's possible the employee was already removed, or the ID is stale.
+      // We'll still attempt the filter operations.
+    }
+
+    setAllEmployees((prevAllEmployees) => {
+      const originalLength = prevAllEmployees.length;
+      const newList = prevAllEmployees.filter((emp) => emp.id !== employeeId);
+      console.log(`[RafflePage] setAllEmployees: prev length ${originalLength}, new length ${newList.length}. ID to remove: ${employeeId}`);
+      // The list is kept sorted by additions, so filtering maintains sort order.
+      return newList;
     });
 
-    setRafflePool(prevPool => prevPool.filter(emp => emp.id !== employeeId));
+    setRafflePool((prevPool) => prevPool.filter((emp) => emp.id !== employeeId));
 
-    if (employeeNameForToast) {
+    if (employeeToRemove) {
       toast({
         title: "Employee Removed",
-        description: `${employeeNameForToast} has been removed from the system and the raffle pool.`,
+        description: `${employeeToRemove.name} has been removed from the system and the raffle pool.`,
         variant: "destructive",
       });
     } else {
-      // This case implies the employee was not found in the prevAllEmployees state during the update.
-      // Could happen if the action was somehow duplicated or list was already modified.
+      // If employeeToRemove was not found in the state *before* setAllEmployees,
+      // it implies it might have already been removed or ID was incorrect.
+      // The filter operation in setAllEmployees would simply have no effect for that ID.
       toast({
         title: "Notice",
-        description: `Employee with ID ${employeeId} was not found for removal, or was already removed.`,
-        variant: "destructive", // Kept as destructive for visibility, could be default
+        description: `Attempted to remove employee with ID ${employeeId}. If they existed, they have been removed.`,
+        variant: "default",
       });
     }
   };
@@ -137,7 +143,7 @@ export default function RafflePage() {
       setShowConfetti(true);
       setIsDrawing(false);
 
-      setRafflePool([]); // Clear pool after drawing
+      setRafflePool([]); 
 
       toast({
         title: "Winner Selected!",
