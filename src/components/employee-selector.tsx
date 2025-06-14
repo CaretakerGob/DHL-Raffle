@@ -51,7 +51,7 @@ export function EmployeeSelector({
         title: "Employee Added to Pool",
         description: `${employee.name} is now in the raffle!`,
       });
-      setStagedEmployeeIdForDropdown(""); 
+      setStagedEmployeeIdForDropdown("");
     }
   };
 
@@ -80,7 +80,7 @@ export function EmployeeSelector({
     }
 
     const newEmployee: Employee = {
-      id: Date.now().toString() + '-' + Math.random().toString(36).substring(2, 7),
+      id: Date.now().toString() + '-' + Math.random().toString(36).substring(2, 7), // More robust ID
       name: trimmedName,
     };
 
@@ -93,13 +93,14 @@ export function EmployeeSelector({
   };
 
   const handleDeletePress = (employeeId: string, employeeName: string) => {
-    console.log(`[EmployeeSelector] handleDeletePress called for: ${employeeName} (ID: ${employeeId})`);
-    if (window.confirm(`Are you sure you want to permanently remove ${employeeName} from the system? This action cannot be undone.`)) {
-      console.log(`[EmployeeSelector] Confirmed deletion for: ${employeeName} (ID: ${employeeId})`);
-      onDeleteEmployeeSystemWide(employeeId);
-    } else {
-      console.log(`[EmployeeSelector] Cancelled deletion for: ${employeeName} (ID: ${employeeId})`);
-    }
+    console.log(`[EmployeeSelector] handleDeletePress called for: ${employeeName} (ID: ${employeeId}) (Confirmation SKIPPED for testing)`);
+    // Temporarily skipping confirmation for diagnostics
+    // if (window.confirm(`Are you sure you want to permanently remove ${employeeName} from the system? This action cannot be undone.`)) {
+    console.log(`[EmployeeSelector] Proceeding with deletion for: ${employeeName} (ID: ${employeeId})`);
+    onDeleteEmployeeSystemWide(employeeId);
+    // } else {
+    //   console.log(`[EmployeeSelector] Cancelled deletion for: ${employeeName} (ID: ${employeeId})`);
+    // }
   };
 
   return (
