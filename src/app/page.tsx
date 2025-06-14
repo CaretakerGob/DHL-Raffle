@@ -86,13 +86,13 @@ export default function RafflePage() {
 
     setAllEmployees(prevAllEmployees => {
         const filteredEmployees = prevAllEmployees.filter(emp => emp.id !== employeeId);
-        const newSortedEmployees = [...filteredEmployees].sort((a, b) => a.name.localeCompare(b.name));
-        return newSortedEmployees;
+        // Sort the new filtered array
+        return filteredEmployees.sort((a, b) => a.name.localeCompare(b.name));
     });
 
-    setRafflePool(prevRafflePool => {
-        return prevRafflePool.filter(emp => emp.id !== employeeId);
-    });
+    setRafflePool(prevRafflePool => 
+        prevRafflePool.filter(emp => emp.id !== employeeId)
+    );
 
     toast({
       title: "Employee Removed",
