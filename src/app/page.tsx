@@ -23,7 +23,8 @@ import { Settings, Trophy } from "lucide-react";
 
 // Helper to generate unique IDs for mock data
 const generateId = (prefix: string, index: number): string => {
-  return `${prefix}-${index + 1}-${Date.now().toString(36).slice(-4)}-${Math.random().toString(36).slice(2, 6)}`;
+  // More robust ID: prefix, index, timestamp, long random string
+  return `${prefix}-${index + 1}-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 10)}`;
 };
 
 const RAW_EMPLOYEE_NAMES: string[] = [
@@ -34,6 +35,7 @@ const RAW_EMPLOYEE_NAMES: string[] = [
   'Ursula K. Le Guin', 'Vincent van Gogh', 'Wolfgang Mozart', 'Xiaoming Li', 'Yoko Ono Zee'
 ];
 
+
 const MOCK_EMPLOYEES_DATA: Employee[] = RAW_EMPLOYEE_NAMES.map((name, index) => ({
   id: generateId('emp', index),
   name: name,
@@ -41,7 +43,7 @@ const MOCK_EMPLOYEES_DATA: Employee[] = RAW_EMPLOYEE_NAMES.map((name, index) => 
 
 
 export default function RafflePage() {
-  const [allEmployees, setAllEmployees] = _React.useState<Employee[]>(() => 
+  const [allEmployees, setAllEmployees] = _React.useState<Employee[]>(() =>
     [...MOCK_EMPLOYEES_DATA].sort((a,b) => a.name.localeCompare(b.name))
   );
   const [rafflePool, setRafflePool] = _React.useState<Employee[]>([]);
@@ -74,39 +76,35 @@ export default function RafflePage() {
 
   const handleDeleteEmployeeSystemWide = (employeeId: string) => {
     console.log(`[RafflePage] handleDeleteEmployeeSystemWide called for ID: ${employeeId}`);
-
-    const employeeToRemove = allEmployees.find((emp) => emp.id === employeeId);
-
-    if (!employeeToRemove) {
-      console.warn(`[RafflePage] Employee with ID ${employeeId} not found in current allEmployees state for toast message.`);
-      // It's possible the employee was already removed, or the ID is stale.
-      // We'll still attempt the filter operations.
-    }
+    let employeeNameForToast: string | undefined;
 
     setAllEmployees((prevAllEmployees) => {
-      const originalLength = prevAllEmployees.length;
+      const employeeFound = prevAllEmployees.find(emp => emp.id === employeeId);
+      if (employeeFound) {
+        employeeNameForToast = employeeFound.name;
+      }
+      // The list is always kept sorted, so filtering maintains sort order.
       const newList = prevAllEmployees.filter((emp) => emp.id !== employeeId);
-      console.log(`[RafflePage] setAllEmployees: prev length ${originalLength}, new length ${newList.length}. ID to remove: ${employeeId}`);
-      // The list is kept sorted by additions, so filtering maintains sort order.
+      console.log(`[RafflePage] setAllEmployees: prev length ${prevAllEmployees.length}, new list length ${newList.length}. Employee to remove: ${employeeNameForToast || 'N/A'}`);
       return newList;
     });
 
     setRafflePool((prevPool) => prevPool.filter((emp) => emp.id !== employeeId));
 
-    if (employeeToRemove) {
+    if (employeeNameForToast) {
       toast({
         title: "Employee Removed",
-        description: `${employeeToRemove.name} has been removed from the system and the raffle pool.`,
+        description: `${employeeNameForToast} has been removed from the system and the raffle pool.`,
         variant: "destructive",
       });
     } else {
-      // If employeeToRemove was not found in the state *before* setAllEmployees,
-      // it implies it might have already been removed or ID was incorrect.
-      // The filter operation in setAllEmployees would simply have no effect for that ID.
+      // This case should ideally not happen if the UI reflects the state correctly.
+      // It means an attempt to delete an ID that's not in `allEmployees` at the moment of deletion.
+      console.warn(`[RafflePage] Employee with ID ${employeeId} not found in allEmployees during state update for toast.`);
       toast({
-        title: "Notice",
-        description: `Attempted to remove employee with ID ${employeeId}. If they existed, they have been removed.`,
-        variant: "default",
+        title: "Error Removing Employee",
+        description: `Could not find employee with ID ${employeeId} to remove.`,
+        variant: "destructive",
       });
     }
   };
@@ -143,7 +141,7 @@ export default function RafflePage() {
       setShowConfetti(true);
       setIsDrawing(false);
 
-      setRafflePool([]); 
+      setRafflePool([]);
 
       toast({
         title: "Winner Selected!",
@@ -190,7 +188,7 @@ export default function RafflePage() {
               src="/DHL-raffle-Logo.png"
               alt="DHL Raffle Logo"
               width={350}
-              height={105}
+              height={100}
               priority
               className="mb-0"
             />
@@ -221,7 +219,7 @@ export default function RafflePage() {
                 <div className="px-6 pb-6">
                   <EmployeeSelector
                     allEmployees={allEmployees}
-                    setAllEmployees={setAllEmployees} 
+                    setAllEmployees={setAllEmployees}
                     availableEmployeesForSelection={availableToAddToPoolEmployees}
                     onAddEmployeeToPool={handleAddEmployeeToPool}
                     onDeleteEmployeeSystemWide={handleDeleteEmployeeSystemWide}
