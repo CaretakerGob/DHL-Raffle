@@ -12,6 +12,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area"; // Added import
 import { EmployeeSelector } from "@/components/employee-selector";
 import { RafflePool } from "@/components/raffle-pool";
 import { WinnerDisplay } from "@/components/winner-display";
@@ -159,7 +160,7 @@ export default function RafflePage() {
       />
       <div className="absolute inset-0 bg-background/50" />
 
-      <div className="relative z-10 flex flex-col items-center py-12 sm:py-16 px-4">
+      <div className="relative z-10 flex flex-col items-center py-16 sm:py-24 px-4">
         <header className="mb-6 sm:mb-8 flex flex-col items-center">
           <div className="bg-card/90 backdrop-blur-sm py-2 px-3 rounded-lg shadow-xl border border-white/20 flex flex-col items-center">
             <Image
@@ -193,15 +194,17 @@ export default function RafflePage() {
                   Add, create, or remove employees from the system.
                 </DialogDescription>
               </DialogHeader>
-              <div className="overflow-y-auto flex-1 px-6 pb-6">
-                <EmployeeSelector
-                  allEmployees={allEmployees}
-                  setAllEmployees={setAllEmployees}
-                  availableEmployeesForSelection={availableToAddToPoolEmployees}
-                  onAddEmployeeToPool={handleAddEmployeeToPool}
-                  onDeleteEmployeeSystemWide={handleDeleteEmployeeSystemWide}
-                />
-              </div>
+              <ScrollArea className="flex-1"> {/* Changed div to ScrollArea and applied flex-1 */}
+                <div className="px-6 pb-6"> {/* Inner div for padding */}
+                  <EmployeeSelector
+                    allEmployees={allEmployees}
+                    setAllEmployees={setAllEmployees}
+                    availableEmployeesForSelection={availableToAddToPoolEmployees}
+                    onAddEmployeeToPool={handleAddEmployeeToPool}
+                    onDeleteEmployeeSystemWide={handleDeleteEmployeeSystemWide}
+                  />
+                </div>
+              </ScrollArea>
             </DialogContent>
           </Dialog>
 
@@ -267,6 +270,4 @@ export default function RafflePage() {
     </div>
   );
 }
-    
-
     
