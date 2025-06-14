@@ -33,6 +33,14 @@ const MOCK_EMPLOYEES_DATA: Employee[] = [
   { id: '10', name: 'Julia Child' },
   { id: '11', name: 'Nacho Cheese' },
   { id: '12', name: 'Edgar Allen Poe' },
+  { id: '13', name: 'Walter White' },
+  { id: '14', name: 'Jesse Pinkman' },
+  { id: '15', name: 'Saul Goodman' },
+  { id: '16', name: 'Kim Wexler' },
+  { id: '17', name: 'Gus Fring' },
+  { id: '18', name: 'Mike Ehrmantraut' },
+  { id: '19', name: 'Skyler White' },
+  { id: '20', name: 'Hank Schrader' },
 ];
 
 export default function RafflePage() {
@@ -151,7 +159,7 @@ export default function RafflePage() {
       />
       <div className="absolute inset-0 bg-background/50" />
 
-      <div className="relative z-10 flex flex-col items-center py-24 sm:py-28 px-4">
+      <div className="relative z-10 flex flex-col items-center py-10 sm:py-12 px-4">
         <header className="mb-6 sm:mb-8 flex flex-col items-center">
           <div className="bg-card/90 backdrop-blur-sm py-2 px-3 rounded-lg shadow-xl border border-white/20 flex flex-col items-center">
             <Image
@@ -185,7 +193,7 @@ export default function RafflePage() {
                   Add, create, or remove employees from the system.
                 </DialogDescription>
               </DialogHeader>
-              <div className="overflow-y-auto flex-grow pr-2 -mr-2">
+              <div className="overflow-y-auto flex-1 py-1">
                 <EmployeeSelector
                   allEmployees={allEmployees}
                   setAllEmployees={setAllEmployees}
@@ -259,3 +267,5 @@ export default function RafflePage() {
     </div>
   );
 }
+
+    

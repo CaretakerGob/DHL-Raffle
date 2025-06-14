@@ -71,7 +71,9 @@ export function EmployeeSelector({
     setSearchTerm(""); 
     setIsPopoverOpen(false); 
     setStagedEmployeeIdForDropdown(""); 
-    inputRef.current?.focus(); 
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
   };
 
   const handleDropdownSelect = (employeeId: string) => {
@@ -87,7 +89,9 @@ export function EmployeeSelector({
         description: `${employee.name} is now in the raffle!`,
       });
       setStagedEmployeeIdForDropdown(""); 
-      inputRef.current?.focus(); 
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
     }
   };
 
@@ -135,19 +139,26 @@ export function EmployeeSelector({
   };
   
   React.useEffect(() => {
-    if (searchTerm.length > 0 && availableEmployeesForSelection.length > 0 && filteredEmployeesForSearch.length > 0) {
-      setIsPopoverOpen(true);
-    } else if (searchTerm.length > 0 && availableEmployeesForSelection.length > 0 && filteredEmployeesForSearch.length === 0) {
-       setIsPopoverOpen(true); 
+    const hasSearchTerm = searchTerm.length > 0;
+    const hasAvailableEmployees = availableEmployeesForSelection.length > 0;
+    const hasFilteredResults = filteredEmployeesForSearch.length > 0;
+
+    if (hasSearchTerm && hasAvailableEmployees && hasFilteredResults) {
+        setIsPopoverOpen(true);
+    } else if (hasSearchTerm && hasAvailableEmployees && !hasFilteredResults) {
+        setIsPopoverOpen(true); // Keep open to show "No employees match..."
+    } else if (!hasSearchTerm && hasAvailableEmployees) {
+        // If input is focused and empty, but there are employees, keep popover potentially open on click
+        // setIsPopoverOpen(false); // Or true depending on desired UX for empty focused input
     }
      else {
-      setIsPopoverOpen(false);
+        setIsPopoverOpen(false);
     }
   }, [searchTerm, filteredEmployeesForSearch.length, availableEmployeesForSelection.length]);
 
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-1">
       <div>
         <h3 className="text-sm font-medium mb-2 text-muted-foreground flex items-center"><UserPlus className="mr-2 h-4 w-4" />Add Existing Employee to Pool</h3>
         <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
@@ -161,9 +172,8 @@ export function EmployeeSelector({
                 value={searchTerm}
                 onChange={handleSearchInputChange}
                  onClick={() => {
-                  if (searchTerm.length > 0 && availableEmployeesForSelection.length > 0 && filteredEmployeesForSearch.length > 0) {
-                    setIsPopoverOpen(true);
-                  } else if (searchTerm.length === 0 && availableEmployeesForSelection.length > 0) {
+                  // Open if there are employees to show or if search term exists (to show no results)
+                  if (availableEmployeesForSelection.length > 0 || searchTerm.length > 0) {
                     setIsPopoverOpen(true); 
                   }
                 }}
@@ -176,13 +186,14 @@ export function EmployeeSelector({
           </PopoverTrigger>
           <PopoverContent
             id="employee-prediction-list"
-            className="w-[--radix-popover-trigger-width] p-0"
+            className="w-[--radix-popover-trigger-width] p-0" 
             align="start"
           >
             {(() => {
               if (!isPopoverOpen) return null; 
-              if (availableEmployeesForSelection.length === 0) {
-                return <p className="p-3 text-sm text-muted-foreground">All employees are already in the raffle pool or none exist.</p>;
+              
+              if (availableEmployeesForSelection.length === 0 && searchTerm.length === 0) {
+                return <p className="p-3 text-sm text-muted-foreground">No employees in system to add.</p>;
               }
               if (searchTerm.length > 0 && filteredEmployeesForSearch.length === 0) {
                  return <p className="p-3 text-sm text-muted-foreground">No employees match your search.</p>;
@@ -190,16 +201,16 @@ export function EmployeeSelector({
 
               const listToDisplay = searchTerm.length > 0 ? filteredEmployeesForSearch : sortedAvailableEmployeesForDropdown;
 
-              if (listToDisplay.length === 0 && searchTerm.length === 0) {
-                 return <p className="p-3 text-sm text-muted-foreground">Type to search or use the dropdown.</p>;
+              if (listToDisplay.length === 0 && searchTerm.length === 0) { 
+                 return <p className="p-3 text-sm text-muted-foreground">Type to search or use the dropdown below.</p>;
               }
               
               if (listToDisplay.length === 0) { 
-                return <p className="p-3 text-sm text-muted-foreground">No available employees.</p>;
+                return <p className="p-3 text-sm text-muted-foreground">No available employees to add to pool.</p>;
               }
 
               return (
-                <ScrollArea className="max-h-60">
+                <ScrollArea className="max-h-60"> 
                   <div role="listbox" className="py-1">
                     {listToDisplay.map((employee) => (
                       <div
@@ -235,7 +246,7 @@ export function EmployeeSelector({
           <SelectTrigger className="w-full">
             <SelectValue placeholder="Select an employee directly..." />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent> 
             {sortedAvailableEmployeesForDropdown.length === 0 ? (
               <SelectItem value="no-employees" disabled>All available employees are in the pool or none exist.</SelectItem>
             ) : (
@@ -273,7 +284,7 @@ export function EmployeeSelector({
             No employees in the system yet. Add one using the form above!
           </p>
         ) : (
-          <ScrollArea className="max-h-72 border rounded-md">
+          <ScrollArea className="max-h-72 border rounded-md"> 
             <div className="p-1 space-y-1">
               {allEmployees.sort((a,b) => a.name.localeCompare(b.name)).map((employee) => (
                 <Card key={employee.id} className="bg-card shadow-xs">
@@ -298,3 +309,5 @@ export function EmployeeSelector({
     </div>
   );
 }
+
+    
