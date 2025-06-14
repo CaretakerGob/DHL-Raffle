@@ -141,14 +141,14 @@ export function EmployeeSelector({
         </div>
       </div>
 
-      <div className="pt-2">
+      <div className="pt-2 flex flex-col">
         <h3 className="text-sm font-medium mb-2 text-muted-foreground flex items-center"><Users className="mr-2 h-4 w-4" />All Employees in System ({allEmployees.length})</h3>
         {allEmployees.length === 0 ? (
           <p className="text-xs text-muted-foreground mt-1">
             No employees in the system yet. Add one using the form above!
           </p>
         ) : (
-          <ScrollArea className="border rounded-md max-h-32">
+          <ScrollArea className="border rounded-md h-32">
             <div className="p-2 space-y-1">
               {allEmployees.sort((a,b) => a.name.localeCompare(b.name)).map((employee) => (
                 <div key={employee.id} className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50 text-sm">
