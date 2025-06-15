@@ -41,6 +41,13 @@ const generateId = (prefix: string, index: number): string => {
   return `${prefix}-${index + 1}-${timestampPart}-${randomPart}`;
 };
 
+type ConfirmationAction = 
+  | null 
+  | { type: 'deleteAll' } 
+  | { type: 'deleteSingle', employeeId: string, employeeName: string }
+  | { type: 'restoreDefaults' };
+
+
 export default function RafflePage() {
   const [allEmployees, setAllEmployees] = _React.useState<Employee[]>([]);
   const [rafflePool, setRafflePool] = _React.useState<Employee[]>([]);
@@ -55,7 +62,7 @@ export default function RafflePage() {
   const [isInitialLoadComplete, setIsInitialLoadComplete] = _React.useState<boolean>(false);
 
   const [showConfirmationDialog, setShowConfirmationDialog] = _React.useState<boolean>(false);
-  const [confirmationAction, setConfirmationAction] = _React.useState<null | { type: 'deleteAll' } | { type: 'deleteSingle', employeeId: string, employeeName: string }>(null);
+  const [confirmationAction, setConfirmationAction] = _React.useState<ConfirmationAction>(null);
   const [confirmationTitle, setConfirmationTitle] = _React.useState<string>("");
   const [confirmationMessage, setConfirmationMessage] = _React.useState<string>("");
 
@@ -168,7 +175,7 @@ export default function RafflePage() {
     setShowConfirmationDialog(true);
   };
 
-  const handleDeleteAllEmployeesSystemWide = () => {
+  const handleDeleteAllEmployeesRequest = () => {
     console.log('[RafflePage] Attempting to delete all employees.');
     if (allEmployees.length === 0) {
       console.log('[RafflePage] No employees to delete.');
@@ -184,7 +191,21 @@ export default function RafflePage() {
     setShowConfirmationDialog(true);
   };
 
-  const handleConfirmDeletionAction = () => {
+  const handleRestoreDefaultEmployeesRequest = () => {
+    if (DEFAULT_EMPLOYEES.length === 0) {
+        toast({
+            title: "No Default Employees",
+            description: "There is no default employee list configured.",
+        });
+        return;
+    }
+    setConfirmationTitle("Confirm Restore Defaults");
+    setConfirmationMessage("Are you sure you want to replace all current employees with the default list? This action cannot be undone and will also clear the current raffle pool.");
+    setConfirmationAction({ type: 'restoreDefaults' });
+    setShowConfirmationDialog(true);
+  };
+
+  const handleConfirmAction = () => {
     if (!confirmationAction) return;
 
     if (confirmationAction.type === 'deleteAll') {
@@ -200,14 +221,24 @@ export default function RafflePage() {
     } else if (confirmationAction.type === 'deleteSingle') {
       console.log(`[RafflePage] Confirmed deletion of single employee: ${confirmationAction.employeeName}`);
       executeDeleteSingleEmployee(confirmationAction.employeeId);
+    } else if (confirmationAction.type === 'restoreDefaults') {
+      console.log('[RafflePage] Confirmed restoration of default employees.');
+      setAllEmployees([...DEFAULT_EMPLOYEES].sort((a, b) => a.name.localeCompare(b.name)));
+      setRafflePool([]);
+      console.log('[RafflePage] Employee list restored to defaults.');
+      toast({
+        title: "Defaults Restored",
+        description: "The employee list has been restored to the default set. The raffle pool has been cleared.",
+      });
     }
+
 
     setShowConfirmationDialog(false);
     setConfirmationAction(null);
   };
 
-  const handleCancelDeletionAction = () => {
-    console.log('[RafflePage] Cancelled deletion action from dialog.');
+  const handleCancelAction = () => {
+    console.log('[RafflePage] Cancelled action from dialog.');
     setShowConfirmationDialog(false);
     setConfirmationAction(null);
   };
@@ -315,7 +346,7 @@ export default function RafflePage() {
               <DialogHeader className="p-6 pb-4">
                 <DialogTitle className="text-xl sm:text-2xl text-primary">Manage Employees</DialogTitle>
                 <DialogDescription>
-                  Add, create, or remove employees from the system.
+                  Add, create, or remove employees from the system. You can also restore the default list.
                 </DialogDescription>
               </DialogHeader>
               <ScrollArea className="flex-1">
@@ -327,7 +358,8 @@ export default function RafflePage() {
                       availableEmployeesForSelection={availableToAddToPoolEmployees}
                       onAddEmployeeToPool={handleAddEmployeeToPool}
                       onRequestSingleEmployeeDelete={requestDeleteSingleEmployee}
-                      onDeleteAllEmployeesSystemWide={handleDeleteAllEmployeesSystemWide}
+                      onDeleteAllEmployeesSystemWide={handleDeleteAllEmployeesRequest}
+                      onRestoreDefaultEmployees={handleRestoreDefaultEmployeesRequest}
                     />
                   ) : (
                     <div className="text-center p-8">Loading employees...</div>
@@ -416,8 +448,8 @@ export default function RafflePage() {
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel onClick={handleCancelDeletionAction}>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleConfirmDeletionAction}>Confirm</AlertDialogAction>
+                <AlertDialogCancel onClick={handleCancelAction}>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleConfirmAction}>Confirm</AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
@@ -442,5 +474,6 @@ export default function RafflePage() {
     
 
     
+
 
 

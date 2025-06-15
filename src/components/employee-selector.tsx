@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Label } from "@/components/ui/label";
-import { UserPlus, PlusCircle, Trash2, Users } from "lucide-react";
+import { UserPlus, PlusCircle, Trash2, Users, RefreshCcw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface EmployeeSelectorProps {
@@ -24,6 +24,7 @@ interface EmployeeSelectorProps {
   onAddEmployeeToPool: (employeeId: string) => void;
   onRequestSingleEmployeeDelete: (employeeId: string, employeeName: string) => void;
   onDeleteAllEmployeesSystemWide: () => void;
+  onRestoreDefaultEmployees: () => void;
 }
 
 export function EmployeeSelector({
@@ -32,7 +33,8 @@ export function EmployeeSelector({
   availableEmployeesForSelection,
   onAddEmployeeToPool,
   onRequestSingleEmployeeDelete,
-  onDeleteAllEmployeesSystemWide
+  onDeleteAllEmployeesSystemWide,
+  onRestoreDefaultEmployees
 }: EmployeeSelectorProps) {
   const [stagedEmployeeIdForDropdown, setStagedEmployeeIdForDropdown] = React.useState<string>("");
   const [newEmployeeNameInput, setNewEmployeeNameInput] = React.useState<string>("");
@@ -167,21 +169,32 @@ export function EmployeeSelector({
       <div className="pt-2 flex flex-col">
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-sm font-medium text-muted-foreground flex items-center"><Users className="mr-2 h-4 w-4" />All Employees in System ({allEmployees.length})</h3>
-          {allEmployees.length > 0 && (
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={onDeleteAllEmployeesSystemWide}
-              className="text-xs"
-            >
-              <Trash2 className="mr-1.5 h-3.5 w-3.5" />
-              Delete All
-            </Button>
-          )}
+          <div className="flex gap-2">
+             <Button
+                variant="outline"
+                size="sm"
+                onClick={onRestoreDefaultEmployees}
+                className="text-xs"
+              >
+                <RefreshCcw className="mr-1.5 h-3.5 w-3.5" />
+                Restore Defaults
+              </Button>
+            {allEmployees.length > 0 && (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={onDeleteAllEmployeesSystemWide}
+                className="text-xs"
+              >
+                <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+                Delete All
+              </Button>
+            )}
+          </div>
         </div>
         {allEmployees.length === 0 ? (
           <p className="text-xs text-muted-foreground mt-1">
-            No employees in the system yet. Add one using the form above!
+            No employees in the system yet. Add one using the form above or restore defaults.
           </p>
         ) : (
           <ScrollArea className="border rounded-md h-64">
@@ -214,3 +227,4 @@ export function EmployeeSelector({
 }
 
     
+
