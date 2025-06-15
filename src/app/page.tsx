@@ -12,6 +12,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { EmployeeSelector } from "@/components/employee-selector";
 import { RafflePool } from "@/components/raffle-pool";
@@ -19,9 +20,9 @@ import { WinnerDisplay } from "@/components/winner-display";
 import { Confetti } from "@/components/confetti";
 import type { Employee } from "@/types/employee";
 import { useToast } from "@/hooks/use-toast";
-import { Settings, Trophy } from "lucide-react";
+import { Settings, Trophy, Gift } from "lucide-react";
 
-const LOCAL_STORAGE_EMPLOYEES_KEY = 'dhlRaffleEmployeesV2'; // Incremented key for new structure
+const LOCAL_STORAGE_EMPLOYEES_KEY = 'dhlRaffleEmployeesV2';
 
 const generateId = (prefix: string, index: number): string => {
   const randomPart = Math.random().toString(36).substring(2, 10);
@@ -68,6 +69,7 @@ export default function RafflePage() {
   const [allEmployees, setAllEmployees] = _React.useState<Employee[]>([]);
   const [rafflePool, setRafflePool] = _React.useState<Employee[]>([]);
   const [winner, setWinner] = _React.useState<Employee | null>(null);
+  const [prizeName, setPrizeName] = _React.useState<string>("");
   const [isDrawing, setIsDrawing] = _React.useState<boolean>(false);
   const [showConfetti, setShowConfetti] = _React.useState<boolean>(false);
   const [showWinnerModal, setShowWinnerModal] = _React.useState<boolean>(false);
@@ -85,11 +87,10 @@ export default function RafflePage() {
       if (storedEmployeesJson) {
         try {
           let storedEmployees = JSON.parse(storedEmployeesJson) as Partial<Employee>[];
-          // Migration: Ensure all employees have a category, id, and name
           initialDataToSet = storedEmployees.map((emp, index) => ({
-            id: emp.id || generateId('migrated', index), // Ensure ID exists
-            name: emp.name || 'Unknown Employee', // Ensure name exists
-            category: emp.category || 'employee', // Default to 'employee' if missing
+            id: emp.id || generateId('migrated', index),
+            name: emp.name || 'Unknown Employee',
+            category: emp.category || 'employee',
           })) as Employee[];
         } catch (error) {
           console.error("Error parsing employees from localStorage, falling back to mock data:", error);
@@ -194,12 +195,12 @@ export default function RafflePage() {
       setShowConfetti(true);
       setIsDrawing(false);
 
-      setRafflePool([]);
+      setRafflePool([]); // Clear the pool after drawing
 
       toast({
         title: "Winner Selected!",
-        description: `Congratulations to ${newWinner.name}! The raffle pool has been cleared.`,
-        duration: 5000,
+        description: `Congratulations to ${newWinner.name}! ${prizeName ? `They won: ${prizeName}.` : ''} The raffle pool has been cleared.`,
+        duration: 7000, // Increased duration for prize info
       });
 
       modalTimerRef.current = setTimeout(() => {
@@ -286,6 +287,23 @@ export default function RafflePage() {
             </DialogContent>
           </Dialog>
 
+          <Card className="shadow-lg bg-card/90 backdrop-blur-md border border-white/20">
+            <CardHeader>
+              <CardTitle className="text-xl sm:text-2xl text-center sm:text-left flex items-center">
+                <Gift className="mr-2 h-6 w-6 text-primary" />
+                Set Prize (Optional)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Input
+                type="text"
+                placeholder="E.g., $50 Gift Card, Extra Day Off"
+                value={prizeName}
+                onChange={(e) => setPrizeName(e.target.value)}
+                className="w-full"
+              />
+            </CardContent>
+          </Card>
 
           <Card className="shadow-lg bg-card/90 backdrop-blur-md border border-white/20">
             <CardHeader>
@@ -329,6 +347,11 @@ export default function RafflePage() {
                 </DialogTitle>
                 <DialogDescription className="text-xl text-card-foreground/90 mt-3 animate-winner-reveal" style={{ animationDelay: '0.4s' }}>
                   Congratulations!
+                  {prizeName && winner && (
+                    <span className="block mt-2 text-lg">
+                      You've won: <span className="font-semibold text-primary">{prizeName}</span>!
+                    </span>
+                  )}
                 </DialogDescription>
               </DialogHeader>
             </DialogContent>
@@ -336,7 +359,7 @@ export default function RafflePage() {
 
           {!isDrawing && winner && !showWinnerModal && (
             <div className="mt-8 sm:mt-12">
-              <WinnerDisplay winner={winner} />
+              <WinnerDisplay winner={winner} prizeName={prizeName} />
             </div>
           )}
         </main>
