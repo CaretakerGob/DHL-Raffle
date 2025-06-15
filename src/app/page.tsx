@@ -163,6 +163,26 @@ export default function RafflePage() {
     }
   };
 
+  const handleDeleteAllEmployeesSystemWide = () => {
+    if (allEmployees.length === 0) {
+      toast({
+        title: "No Employees",
+        description: "There are no employees in the system to delete.",
+      });
+      return;
+    }
+
+    if (window.confirm("Are you sure you want to permanently remove ALL employees from the system? This action cannot be undone.")) {
+      setAllEmployees([]);
+      setRafflePool([]);
+      toast({
+        title: "All Employees Removed",
+        description: "All employees have been removed from the system and the raffle pool.",
+        variant: "destructive",
+      });
+    }
+  };
+
 
   const handleDrawWinner = () => {
     if (rafflePool.length === 0) {
@@ -278,6 +298,7 @@ export default function RafflePage() {
                       availableEmployeesForSelection={availableToAddToPoolEmployees}
                       onAddEmployeeToPool={handleAddEmployeeToPool}
                       onDeleteEmployeeSystemWide={handleDeleteEmployeeSystemWide}
+                      onDeleteAllEmployeesSystemWide={handleDeleteAllEmployeesSystemWide}
                     />
                   ) : (
                     <div className="text-center p-8">Loading employees...</div>

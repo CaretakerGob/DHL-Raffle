@@ -23,6 +23,7 @@ interface EmployeeSelectorProps {
   availableEmployeesForSelection: Employee[];
   onAddEmployeeToPool: (employeeId: string) => void;
   onDeleteEmployeeSystemWide: (employeeId: string) => void;
+  onDeleteAllEmployeesSystemWide: () => void;
 }
 
 export function EmployeeSelector({
@@ -30,7 +31,8 @@ export function EmployeeSelector({
   setAllEmployees,
   availableEmployeesForSelection,
   onAddEmployeeToPool,
-  onDeleteEmployeeSystemWide
+  onDeleteEmployeeSystemWide,
+  onDeleteAllEmployeesSystemWide
 }: EmployeeSelectorProps) {
   const [stagedEmployeeIdForDropdown, setStagedEmployeeIdForDropdown] = React.useState<string>("");
   const [newEmployeeNameInput, setNewEmployeeNameInput] = React.useState<string>("");
@@ -168,7 +170,20 @@ export function EmployeeSelector({
       </div>
 
       <div className="pt-2 flex flex-col">
-        <h3 className="text-sm font-medium mb-2 text-muted-foreground flex items-center"><Users className="mr-2 h-4 w-4" />All Employees in System ({allEmployees.length})</h3>
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-sm font-medium text-muted-foreground flex items-center"><Users className="mr-2 h-4 w-4" />All Employees in System ({allEmployees.length})</h3>
+          {allEmployees.length > 0 && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={onDeleteAllEmployeesSystemWide}
+              className="text-xs"
+            >
+              <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+              Delete All
+            </Button>
+          )}
+        </div>
         {allEmployees.length === 0 ? (
           <p className="text-xs text-muted-foreground mt-1">
             No employees in the system yet. Add one using the form above!
