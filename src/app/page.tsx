@@ -146,7 +146,7 @@ export default function RafflePage() {
 
  const handleDeleteEmployeeSystemWide = (employeeId: string) => {
     let employeeNameForToast: string | undefined;
-    console.log(`[RafflePage] Attempting to delete employee with ID: ${employeeId} (DEBUG: no toast)`);
+    console.log(`[RafflePage] Attempting to delete employee with ID: ${employeeId}`);
 
     setAllEmployees(prevAllEmployees => {
       const employeeFound = prevAllEmployees.find(emp => emp.id === employeeId);
@@ -164,45 +164,45 @@ export default function RafflePage() {
     setRafflePool(prevPool => prevPool.filter(emp => emp.id !== employeeId));
 
     if (employeeNameForToast) {
-      console.log(`[RafflePage] Employee ${employeeNameForToast} removed from system (DEBUG: no toast).`);
-      // toast({
-      //   title: "Employee Removed",
-      //   description: `${employeeNameForToast} has been removed from the system and the raffle pool.`,
-      //   variant: "destructive",
-      // });
+      console.log(`[RafflePage] Employee ${employeeNameForToast} removed from system.`);
+      toast({
+        title: "Employee Removed",
+        description: `${employeeNameForToast} has been removed from the system and the raffle pool.`,
+        variant: "destructive",
+      });
     } else {
-      console.log(`[RafflePage] Employee with ID ${employeeId} not found or already removed (DEBUG: no toast).`);
-      // toast({
-      //   title: "Employee Not Found or Already Removed",
-      //   description: `Employee with ID ${employeeId} could not be removed or was already gone.`,
-      //   variant: "destructive",
-      // });
+      console.log(`[RafflePage] Employee with ID ${employeeId} not found or already removed.`);
+      toast({
+        title: "Employee Not Found or Already Removed",
+        description: `Employee with ID ${employeeId} could not be removed or was already gone.`,
+        variant: "destructive",
+      });
     }
   };
 
   const handleDeleteAllEmployeesSystemWide = () => {
-    console.log('[RafflePage] Attempting to delete all employees (DEBUG: no toast).');
+    console.log('[RafflePage] Attempting to delete all employees.');
     if (allEmployees.length === 0) {
-      console.log('[RafflePage] No employees to delete (DEBUG: no toast).');
-      // toast({
-      //   title: "No Employees",
-      //   description: "There are no employees in the system to delete.",
-      // });
+      console.log('[RafflePage] No employees to delete.');
+      toast({
+        title: "No Employees",
+        description: "There are no employees in the system to delete.",
+      });
       return;
     }
 
     if (window.confirm("Are you sure you want to permanently remove ALL employees from the system? This action cannot be undone.")) {
-      console.log('[RafflePage] Confirmed deletion of all employees (DEBUG: no toast).');
+      console.log('[RafflePage] Confirmed deletion of all employees.');
       setAllEmployees([]);
       setRafflePool([]);
-      console.log('[RafflePage] All employees state set to empty (DEBUG: no toast).');
-      // toast({
-      //   title: "All Employees Removed",
-      //   description: "All employees have been removed from the system and the raffle pool.",
-      //   variant: "destructive",
-      // });
+      console.log('[RafflePage] All employees state set to empty.');
+      toast({
+        title: "All Employees Removed",
+        description: "All employees have been removed from the system and the raffle pool.",
+        variant: "destructive",
+      });
     } else {
-      console.log('[RafflePage] Cancelled deletion of all employees (DEBUG: no toast).');
+      console.log('[RafflePage] Cancelled deletion of all employees.');
     }
   };
 
