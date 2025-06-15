@@ -95,7 +95,7 @@ export function EmployeeSelector({
       description: `${newEmployee.name} (${newEmployee.category}) has been added.`,
     });
     setNewEmployeeNameInput("");
-    setNewEmployeeCategory("employee"); // Reset category to default
+    setNewEmployeeCategory("employee"); 
   };
 
  const handleDeletePress = (employeeId: string, employeeName: string) => {
