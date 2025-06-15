@@ -237,7 +237,7 @@ export default function RafflePage() {
 
       <div className="relative z-10 flex flex-col items-center py-16 sm:py-24 px-4">
         <header className="mb-6 sm:mb-8 flex flex-col items-center">
-          <div className="bg-card/90 backdrop-blur-sm py-2 px-3 rounded-lg shadow-xl border border-white/20 flex flex-col items-center">
+          <div className="bg-primary py-2 px-3 rounded-lg shadow-xl border border-white/20 flex flex-col items-center">
             <Image
               src="/DHL-raffle-Logo.png"
               alt="DHL Raffle Logo"
