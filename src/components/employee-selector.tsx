@@ -22,7 +22,7 @@ interface EmployeeSelectorProps {
   setAllEmployees: React.Dispatch<React.SetStateAction<Employee[]>>;
   availableEmployeesForSelection: Employee[];
   onAddEmployeeToPool: (employeeId: string) => void;
-  onDeleteEmployeeSystemWide: (employeeId: string) => void;
+  onRequestSingleEmployeeDelete: (employeeId: string, employeeName: string) => void;
   onDeleteAllEmployeesSystemWide: () => void;
 }
 
@@ -31,7 +31,7 @@ export function EmployeeSelector({
   setAllEmployees,
   availableEmployeesForSelection,
   onAddEmployeeToPool,
-  onDeleteEmployeeSystemWide,
+  onRequestSingleEmployeeDelete,
   onDeleteAllEmployeesSystemWide
 }: EmployeeSelectorProps) {
   const [stagedEmployeeIdForDropdown, setStagedEmployeeIdForDropdown] = React.useState<string>("");
@@ -100,12 +100,7 @@ export function EmployeeSelector({
 
  const handleDeletePress = (employeeId: string, employeeName: string) => {
     console.log(`[EmployeeSelector] handleDeletePress called for: ${employeeName} (ID: ${employeeId})`);
-    if (window.confirm(`Are you sure you want to permanently remove ${employeeName} from the system? This action cannot be undone.`)) {
-      console.log(`[EmployeeSelector] Proceeding with deletion for: ${employeeName} (ID: ${employeeId})`);
-      onDeleteEmployeeSystemWide(employeeId);
-    } else {
-      console.log(`[EmployeeSelector] Cancelled deletion for: ${employeeName} (ID: ${employeeId})`);
-    }
+    onRequestSingleEmployeeDelete(employeeId, employeeName);
   };
 
 

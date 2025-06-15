@@ -12,6 +12,16 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { EmployeeSelector } from "@/components/employee-selector";
@@ -77,6 +87,11 @@ export default function RafflePage() {
   const modalTimerRef = _React.useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
   const [isInitialLoadComplete, setIsInitialLoadComplete] = _React.useState<boolean>(false);
+
+  const [showConfirmationDialog, setShowConfirmationDialog] = _React.useState<boolean>(false);
+  const [confirmationAction, setConfirmationAction] = _React.useState<null | { type: 'deleteAll' } | { type: 'deleteSingle', employeeId: string, employeeName: string }>(null);
+  const [confirmationTitle, setConfirmationTitle] = _React.useState<string>("");
+  const [confirmationMessage, setConfirmationMessage] = _React.useState<string>("");
 
 
   _React.useEffect(() => {
@@ -144,7 +159,7 @@ export default function RafflePage() {
     }
   };
 
- const handleDeleteEmployeeSystemWide = (employeeId: string) => {
+ const executeDeleteSingleEmployee = (employeeId: string) => {
     let employeeNameForToast: string | undefined;
     console.log(`[RafflePage] Attempting to delete employee with ID: ${employeeId}`);
 
@@ -180,6 +195,13 @@ export default function RafflePage() {
     }
   };
 
+  const requestDeleteSingleEmployee = (employeeId: string, employeeName: string) => {
+    setConfirmationTitle("Confirm Deletion");
+    setConfirmationMessage(`Are you sure you want to permanently remove ${employeeName} from the system? This action cannot be undone.`);
+    setConfirmationAction({ type: 'deleteSingle', employeeId, employeeName });
+    setShowConfirmationDialog(true);
+  };
+
   const handleDeleteAllEmployeesSystemWide = () => {
     console.log('[RafflePage] Attempting to delete all employees.');
     if (allEmployees.length === 0) {
@@ -190,8 +212,16 @@ export default function RafflePage() {
       });
       return;
     }
+    setConfirmationTitle("Confirm Delete All");
+    setConfirmationMessage("Are you sure you want to permanently remove ALL employees from the system? This action cannot be undone.");
+    setConfirmationAction({ type: 'deleteAll' });
+    setShowConfirmationDialog(true);
+  };
 
-    if (window.confirm("Are you sure you want to permanently remove ALL employees from the system? This action cannot be undone.")) {
+  const handleConfirmDeletionAction = () => {
+    if (!confirmationAction) return;
+
+    if (confirmationAction.type === 'deleteAll') {
       console.log('[RafflePage] Confirmed deletion of all employees.');
       setAllEmployees([]);
       setRafflePool([]);
@@ -201,9 +231,19 @@ export default function RafflePage() {
         description: "All employees have been removed from the system and the raffle pool.",
         variant: "destructive",
       });
-    } else {
-      console.log('[RafflePage] Cancelled deletion of all employees.');
+    } else if (confirmationAction.type === 'deleteSingle') {
+      console.log(`[RafflePage] Confirmed deletion of single employee: ${confirmationAction.employeeName}`);
+      executeDeleteSingleEmployee(confirmationAction.employeeId);
     }
+
+    setShowConfirmationDialog(false);
+    setConfirmationAction(null);
+  };
+
+  const handleCancelDeletionAction = () => {
+    console.log('[RafflePage] Cancelled deletion action from dialog.');
+    setShowConfirmationDialog(false);
+    setConfirmationAction(null);
   };
 
 
@@ -287,7 +327,7 @@ export default function RafflePage() {
               width={350}
               height={100}
               priority
-              style={{ height: 'auto' }}
+              style={{ width: 'auto', height: 'auto' }}
             />
           </div>
         </header>
@@ -320,7 +360,7 @@ export default function RafflePage() {
                       setAllEmployees={setAllEmployees}
                       availableEmployeesForSelection={availableToAddToPoolEmployees}
                       onAddEmployeeToPool={handleAddEmployeeToPool}
-                      onDeleteEmployeeSystemWide={handleDeleteEmployeeSystemWide}
+                      onRequestSingleEmployeeDelete={requestDeleteSingleEmployee}
                       onDeleteAllEmployeesSystemWide={handleDeleteAllEmployeesSystemWide}
                     />
                   ) : (
@@ -400,6 +440,22 @@ export default function RafflePage() {
               </DialogHeader>
             </DialogContent>
           </Dialog>
+          
+          <AlertDialog open={showConfirmationDialog} onOpenChange={setShowConfirmationDialog}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>{confirmationTitle}</AlertDialogTitle>
+                <AlertDialogDescription>
+                  {confirmationMessage}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel onClick={handleCancelDeletionAction}>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleConfirmDeletionAction}>Confirm</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
 
           {!isDrawing && winner && !showWinnerModal && (
             <div className="mt-8 sm:mt-12">
@@ -420,3 +476,4 @@ export default function RafflePage() {
     
 
     
+
