@@ -195,12 +195,12 @@ export default function RafflePage() {
       setShowConfetti(true);
       setIsDrawing(false);
 
-      setRafflePool([]); // Clear the pool after drawing
+      setRafflePool([]); 
 
       toast({
         title: "Winner Selected!",
         description: `Congratulations to ${newWinner.name}! ${prizeName ? `They won: ${prizeName}.` : ''} The raffle pool has been cleared.`,
-        duration: 7000, // Increased duration for prize info
+        duration: 7000, 
       });
 
       modalTimerRef.current = setTimeout(() => {
@@ -349,7 +349,7 @@ export default function RafflePage() {
                   Congratulations!
                   {prizeName && winner && (
                     <span className="block mt-2 text-lg">
-                      You've won: <span className="font-semibold text-primary">{prizeName}</span>!
+                      You've won: <span className="font-semibold text-accent">{prizeName}</span>!
                     </span>
                   )}
                 </DialogDescription>

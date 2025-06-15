@@ -32,7 +32,7 @@ export function WinnerDisplay({ winner, prizeName }: WinnerDisplayProps) {
         </CardTitle>
         {prizeName && (
           <p className="text-lg mt-2 text-muted-foreground">
-            They won: <span className="font-semibold text-primary">{prizeName}</span>
+            They won: <span className="font-semibold text-accent">{prizeName}</span>
           </p>
         )}
         <p className="text-lg mt-2 text-card-foreground/90">Congratulations to them!</p>
