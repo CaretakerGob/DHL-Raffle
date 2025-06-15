@@ -83,8 +83,10 @@ export default function RafflePage() {
     if (typeof window !== 'undefined') {
       const storedEmployeesJson = localStorage.getItem(LOCAL_STORAGE_EMPLOYEES_KEY);
       let dataToSetStateWith: Employee[];
+      console.log('[RafflePage] Initial load: reading from localStorage. Key:', LOCAL_STORAGE_EMPLOYEES_KEY);
 
       if (storedEmployeesJson) {
+        console.log('[RafflePage] Initial load: Found stored employees JSON:', storedEmployeesJson);
         try {
           const parsedEmployees = JSON.parse(storedEmployeesJson) as Partial<Employee>[];
           dataToSetStateWith = parsedEmployees.map((emp, index) => ({
@@ -92,23 +94,34 @@ export default function RafflePage() {
             name: emp.name || 'Unknown Employee',
             category: emp.category || 'employee',
           })) as Employee[];
+          console.log('[RafflePage] Initial load: Parsed employees successfully:', dataToSetStateWith);
         } catch (error) {
-          console.error("Error parsing employees from localStorage. Clearing stored data and using mock data as a fallback for this session:", error);
-          localStorage.removeItem(LOCAL_STORAGE_EMPLOYEES_KEY); // Clear corrupted key
+          console.error("[RafflePage] Initial load: Error parsing employees from localStorage. Clearing stored data and using mock data:", error);
+          localStorage.removeItem(LOCAL_STORAGE_EMPLOYEES_KEY);
           dataToSetStateWith = [...MOCK_EMPLOYEES_DATA].sort((a, b) => a.name.localeCompare(b.name));
         }
       } else {
+        console.log('[RafflePage] Initial load: No stored employees found. Using mock data.');
         dataToSetStateWith = [...MOCK_EMPLOYEES_DATA].sort((a, b) => a.name.localeCompare(b.name));
       }
       setAllEmployees(dataToSetStateWith);
       setIsInitialLoadComplete(true); 
+      console.log('[RafflePage] Initial load: Completed. isInitialLoadComplete set to true.');
     }
   }, []);
 
   _React.useEffect(() => {
+    console.log('[RafflePage] Persistence Effect: Triggered. isInitialLoadComplete:', isInitialLoadComplete, 'Number of employees:', allEmployees.length);
     if (typeof window !== 'undefined' && isInitialLoadComplete) {
-      localStorage.setItem(LOCAL_STORAGE_EMPLOYEES_KEY, JSON.stringify(allEmployees));
-      console.log('[RafflePage] Saved employees to localStorage:', allEmployees);
+      console.log('[RafflePage] Persistence Effect: Conditions met. Attempting to save to localStorage. Key:', LOCAL_STORAGE_EMPLOYEES_KEY);
+      try {
+        localStorage.setItem(LOCAL_STORAGE_EMPLOYEES_KEY, JSON.stringify(allEmployees));
+        console.log('[RafflePage] Persistence Effect: Successfully saved employees to localStorage:', allEmployees);
+      } catch (error) {
+        console.error('[RafflePage] Persistence Effect: Error saving employees to localStorage:', error);
+      }
+    } else {
+      console.log('[RafflePage] Persistence Effect: Conditions NOT met for saving. isInitialLoadComplete:', isInitialLoadComplete);
     }
   }, [allEmployees, isInitialLoadComplete]);
 
@@ -133,7 +146,7 @@ export default function RafflePage() {
 
  const handleDeleteEmployeeSystemWide = (employeeId: string) => {
     let employeeNameForToast: string | undefined;
-    console.log(`[RafflePage] Attempting to delete employee with ID: ${employeeId}`);
+    console.log(`[RafflePage] Attempting to delete employee with ID: ${employeeId} (DEBUG: no toast)`);
 
     setAllEmployees(prevAllEmployees => {
       const employeeFound = prevAllEmployees.find(emp => emp.id === employeeId);
@@ -151,42 +164,45 @@ export default function RafflePage() {
     setRafflePool(prevPool => prevPool.filter(emp => emp.id !== employeeId));
 
     if (employeeNameForToast) {
-      toast({
-        title: "Employee Removed",
-        description: `${employeeNameForToast} has been removed from the system and the raffle pool.`,
-        variant: "destructive",
-      });
+      console.log(`[RafflePage] Employee ${employeeNameForToast} removed from system (DEBUG: no toast).`);
+      // toast({
+      //   title: "Employee Removed",
+      //   description: `${employeeNameForToast} has been removed from the system and the raffle pool.`,
+      //   variant: "destructive",
+      // });
     } else {
-      toast({
-        title: "Employee Not Found or Already Removed",
-        description: `Employee with ID ${employeeId} could not be removed or was already gone.`,
-        variant: "destructive",
-      });
-       console.log(`[RafflePage] Toast fallback: Employee with ID ${employeeId} was targeted for deletion but name not found prior to removal or list didn't change.`);
+      console.log(`[RafflePage] Employee with ID ${employeeId} not found or already removed (DEBUG: no toast).`);
+      // toast({
+      //   title: "Employee Not Found or Already Removed",
+      //   description: `Employee with ID ${employeeId} could not be removed or was already gone.`,
+      //   variant: "destructive",
+      // });
     }
   };
 
   const handleDeleteAllEmployeesSystemWide = () => {
-    console.log('[RafflePage] Attempting to delete all employees.');
+    console.log('[RafflePage] Attempting to delete all employees (DEBUG: no toast).');
     if (allEmployees.length === 0) {
-      toast({
-        title: "No Employees",
-        description: "There are no employees in the system to delete.",
-      });
+      console.log('[RafflePage] No employees to delete (DEBUG: no toast).');
+      // toast({
+      //   title: "No Employees",
+      //   description: "There are no employees in the system to delete.",
+      // });
       return;
     }
 
     if (window.confirm("Are you sure you want to permanently remove ALL employees from the system? This action cannot be undone.")) {
-      console.log('[RafflePage] Confirmed deletion of all employees.');
+      console.log('[RafflePage] Confirmed deletion of all employees (DEBUG: no toast).');
       setAllEmployees([]);
       setRafflePool([]);
-      toast({
-        title: "All Employees Removed",
-        description: "All employees have been removed from the system and the raffle pool.",
-        variant: "destructive",
-      });
+      console.log('[RafflePage] All employees state set to empty (DEBUG: no toast).');
+      // toast({
+      //   title: "All Employees Removed",
+      //   description: "All employees have been removed from the system and the raffle pool.",
+      //   variant: "destructive",
+      // });
     } else {
-      console.log('[RafflePage] Cancelled deletion of all employees.');
+      console.log('[RafflePage] Cancelled deletion of all employees (DEBUG: no toast).');
     }
   };
 
@@ -399,6 +415,8 @@ export default function RafflePage() {
     </div>
   );
 }
+    
+
     
 
     
