@@ -85,14 +85,12 @@ export default function RafflePage() {
       if (storedEmployeesJson) {
         try {
           let storedEmployees = JSON.parse(storedEmployeesJson) as Partial<Employee>[];
-          // Migration: Ensure all employees have a category
-          storedEmployees = storedEmployees.map(emp => ({
-            ...emp,
-            id: emp.id || generateId('migrated', Math.random()), // Ensure ID exists
+          // Migration: Ensure all employees have a category, id, and name
+          initialDataToSet = storedEmployees.map((emp, index) => ({
+            id: emp.id || generateId('migrated', index), // Ensure ID exists
             name: emp.name || 'Unknown Employee', // Ensure name exists
             category: emp.category || 'employee', // Default to 'employee' if missing
           })) as Employee[];
-          initialDataToSet = storedEmployees;
         } catch (error) {
           console.error("Error parsing employees from localStorage, falling back to mock data:", error);
           initialDataToSet = [...MOCK_EMPLOYEES_DATA].sort((a, b) => a.name.localeCompare(b.name));

@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Label } from "@/components/ui/label";
-import { UserPlus, PlusCircle, Trash2, Users, Briefcase } from "lucide-react";
+import { UserPlus, PlusCircle, Trash2, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface EmployeeSelectorProps {
@@ -98,12 +98,12 @@ export function EmployeeSelector({
 
  const handleDeletePress = (employeeId: string, employeeName: string) => {
     console.log(`[EmployeeSelector] handleDeletePress called for: ${employeeName} (ID: ${employeeId})`);
-    // if (window.confirm(`Are you sure you want to permanently remove ${employeeName} from the system? This action cannot be undone.`)) {
+    if (window.confirm(`Are you sure you want to permanently remove ${employeeName} from the system? This action cannot be undone.`)) {
       console.log(`[EmployeeSelector] Proceeding with deletion for: ${employeeName} (ID: ${employeeId})`);
       onDeleteEmployeeSystemWide(employeeId);
-    // } else {
-    //   console.log(`[EmployeeSelector] Cancelled deletion for: ${employeeName} (ID: ${employeeId})`);
-    // }
+    } else {
+      console.log(`[EmployeeSelector] Cancelled deletion for: ${employeeName} (ID: ${employeeId})`);
+    }
   };
 
 
