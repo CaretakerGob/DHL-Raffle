@@ -30,6 +30,7 @@ import { WinnerDisplay } from "@/components/winner-display";
 import { Confetti } from "@/components/confetti";
 import type { Employee } from "@/types/employee";
 import { useToast } from "@/hooks/use-toast";
+import { DEFAULT_EMPLOYEES } from "@/data/default-employees";
 import { Settings, Trophy, Gift } from "lucide-react";
 
 const LOCAL_STORAGE_EMPLOYEES_KEY = 'dhlRaffleEmployeesV2';
@@ -39,41 +40,6 @@ const generateId = (prefix: string, index: number): string => {
   const timestampPart = Date.now().toString(36);
   return `${prefix}-${index + 1}-${timestampPart}-${randomPart}`;
 };
-
-const RAW_EMPLOYEE_NAMES_CATEGORIES: Array<{name: string, category: 'employee' | 'leadership'}> = [
-  { name: 'Alice Wonderland', category: 'leadership' },
-  { name: 'Bob The Builder', category: 'leadership' },
-  { name: 'Charlie Brown', category: 'leadership' },
-  { name: 'Diana Prince', category: 'leadership' },
-  { name: 'Edward Scissorhands', category: 'leadership' },
-  { name: 'Fiona Gallagher', category: 'employee' },
-  { name: 'George Jetson', category: 'employee' },
-  { name: 'Hannah Montana', category: 'employee' },
-  { name: 'Ian Malcolm', category: 'employee' },
-  { name: 'Julia Child', category: 'employee' },
-  { name: 'Katherine Hepburn', category: 'employee' },
-  { name: 'Louis Armstrong', category: 'employee' },
-  { name: 'Marie Curie', category: 'employee' },
-  { name: 'Nikola Tesla', category: 'employee' },
-  { name: 'Oscar Wilde', category: 'employee' },
-  { name: 'Pablo Picasso', category: 'employee' },
-  { name: 'Queen Elizabeth', category: 'employee' },
-  { name: 'Rembrandt van Rijn', category: 'employee' },
-  { name: 'Simone de Beauvoir', category: 'employee' },
-  { name: 'Thomas Edison', category: 'employee' },
-  { name: 'Ursula K. Le Guin', category: 'employee' },
-  { name: 'Vincent van Gogh', category: 'employee' },
-  { name: 'Wolfgang Mozart', category: 'employee' },
-  { name: 'Xiaoming Li', category: 'employee' },
-  { name: 'Yoko Ono Zee', category: 'employee' }
-];
-
-const MOCK_EMPLOYEES_DATA: Employee[] = RAW_EMPLOYEE_NAMES_CATEGORIES.map((emp, index) => ({
-  id: generateId('emp', index),
-  name: emp.name,
-  category: emp.category,
-}));
-
 
 export default function RafflePage() {
   const [allEmployees, setAllEmployees] = _React.useState<Employee[]>([]);
@@ -111,13 +77,13 @@ export default function RafflePage() {
           })) as Employee[];
           console.log('[RafflePage] Initial load: Parsed employees successfully:', dataToSetStateWith);
         } catch (error) {
-          console.error("[RafflePage] Initial load: Error parsing employees from localStorage. Clearing stored data and using mock data:", error);
+          console.error("[RafflePage] Initial load: Error parsing employees from localStorage. Clearing stored data and using default data:", error);
           localStorage.removeItem(LOCAL_STORAGE_EMPLOYEES_KEY);
-          dataToSetStateWith = [...MOCK_EMPLOYEES_DATA].sort((a, b) => a.name.localeCompare(b.name));
+          dataToSetStateWith = [...DEFAULT_EMPLOYEES].sort((a, b) => a.name.localeCompare(b.name));
         }
       } else {
-        console.log('[RafflePage] Initial load: No stored employees found. Using mock data.');
-        dataToSetStateWith = [...MOCK_EMPLOYEES_DATA].sort((a, b) => a.name.localeCompare(b.name));
+        console.log('[RafflePage] Initial load: No stored employees found. Using default data.');
+        dataToSetStateWith = [...DEFAULT_EMPLOYEES].sort((a, b) => a.name.localeCompare(b.name));
       }
       setAllEmployees(dataToSetStateWith);
       setIsInitialLoadComplete(true); 
@@ -476,4 +442,5 @@ export default function RafflePage() {
     
 
     
+
 
