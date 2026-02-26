@@ -192,7 +192,7 @@ export function EmployeeSelector({
           </Select>
         </div>
         <Button onClick={handleCreateAndAddEmployee} variant="default" className="w-full">
-          Create & Add
+          Create
         </Button>
       </div>
 

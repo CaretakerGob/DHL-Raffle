@@ -57,17 +57,36 @@ export function Confetti({ count = 150, active }: ConfettiProps) {
   }, [active, count]);
 
   useEffect(() => {
-    const handleCongratulationsEnded = () => {
+    let hasStartedCelebration = false;
+
+    const startCelebrationSong = () => {
+      if (hasStartedCelebration) return;
+      hasStartedCelebration = true;
+
       if (!kazooAudioRef.current) {
-        kazooAudioRef.current = new Audio('/Kazoo.mp3');
+        kazooAudioRef.current = new Audio('/celebration_song_1.wav');
       }
       kazooAudioRef.current.currentTime = 0;
-      kazooAudioRef.current.play().catch(error => console.error("Error playing Kazoo.mp3:", error));
+      kazooAudioRef.current.play().catch(error => console.error("Error playing celebration_song_1.wav:", error));
+    };
+
+    const handleCongratulationsTimeUpdate = () => {
+      const currentCongratsPlayer = congratulationsAudioRef.current;
+      if (!currentCongratsPlayer) return;
+      if (!Number.isFinite(currentCongratsPlayer.duration) || currentCongratsPlayer.duration <= 0) return;
+
+      if (currentCongratsPlayer.currentTime >= Math.max(0, currentCongratsPlayer.duration - 0.3)) {
+        startCelebrationSong();
+      }
+    };
+
+    const handleCongratulationsEnded = () => {
+      startCelebrationSong();
     };
 
     if (active) {
       if (!congratulationsAudioRef.current) {
-        congratulationsAudioRef.current = new Audio('/Congratulations.mp3');
+        congratulationsAudioRef.current = new Audio('/business_raffle_cong_2.wav');
       }
       const currentCongratsPlayer = congratulationsAudioRef.current;
 
@@ -77,14 +96,18 @@ export function Confetti({ count = 150, active }: ConfettiProps) {
       }
 
       currentCongratsPlayer.currentTime = 0;
+      hasStartedCelebration = false;
+      currentCongratsPlayer.removeEventListener('timeupdate', handleCongratulationsTimeUpdate);
       currentCongratsPlayer.removeEventListener('ended', handleCongratulationsEnded);
+      currentCongratsPlayer.addEventListener('timeupdate', handleCongratulationsTimeUpdate);
       currentCongratsPlayer.addEventListener('ended', handleCongratulationsEnded);
-      currentCongratsPlayer.play().catch(error => console.error("Error playing Congratulations.mp3:", error));
+      currentCongratsPlayer.play().catch(error => console.error("Error playing business_raffle_cong_2.wav:", error));
 
     } else {
       if (congratulationsAudioRef.current) {
         congratulationsAudioRef.current.pause();
         congratulationsAudioRef.current.currentTime = 0;
+        congratulationsAudioRef.current.removeEventListener('timeupdate', handleCongratulationsTimeUpdate);
         congratulationsAudioRef.current.removeEventListener('ended', handleCongratulationsEnded);
       }
       if (kazooAudioRef.current) {
@@ -97,6 +120,7 @@ export function Confetti({ count = 150, active }: ConfettiProps) {
       if (congratulationsAudioRef.current) {
         congratulationsAudioRef.current.pause();
         congratulationsAudioRef.current.currentTime = 0;
+        congratulationsAudioRef.current.removeEventListener('timeupdate', handleCongratulationsTimeUpdate);
         congratulationsAudioRef.current.removeEventListener('ended', handleCongratulationsEnded);
       }
       if (kazooAudioRef.current) {

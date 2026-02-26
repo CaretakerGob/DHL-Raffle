@@ -8,6 +8,28 @@ interface RaffleContextDocument {
   winnerHistory: WinnerRecord[];
 }
 
+const removeUndefinedDeep = (value: unknown): unknown => {
+  if (Array.isArray(value)) {
+    return value.map((entry) => removeUndefinedDeep(entry));
+  }
+
+  if (value && typeof value === 'object') {
+    return Object.entries(value as Record<string, unknown>).reduce<Record<string, unknown>>(
+      (accumulator, [key, entryValue]) => {
+        if (entryValue === undefined) {
+          return accumulator;
+        }
+
+        accumulator[key] = removeUndefinedDeep(entryValue);
+        return accumulator;
+      },
+      {}
+    );
+  }
+
+  return value;
+};
+
 const COLLECTION_NAME = 'raffleContexts';
 
 const getContextDocId = (context: RaffleContext): string => {
@@ -41,10 +63,12 @@ export const saveRaffleContextToFirestore = async (
 ): Promise<void> => {
   if (!db || !isFirebaseConfigured) return;
 
+  const safePayload = removeUndefinedDeep(payload) as RaffleContextDocument;
+
   await setDoc(
     doc(db, COLLECTION_NAME, getContextDocId(context)),
     {
-      ...payload,
+      ...safePayload,
       locationId: context.locationId,
       shiftId: context.shiftId,
       updatedAt: serverTimestamp(),

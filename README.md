@@ -47,3 +47,27 @@ The app signs in users with Firebase Anonymous Auth automatically to satisfy thi
 ### Important
 
 Enable **Anonymous** sign-in in Firebase Authentication for this project, or Firestore operations will be rejected and the app will fall back to local storage.
+
+## Link GitHub commits to Firebase deploys
+
+This repo now includes a GitHub Actions workflow at `.github/workflows/firebase-deploy.yml`.
+
+### What it does
+
+- On every push to `main`, it deploys:
+	- Firestore rules
+	- Firestore indexes
+- Optionally deploys Firebase App Hosting backend when backend id is provided.
+
+### Required GitHub settings
+
+Add these in GitHub repository settings:
+
+- **Secret**
+	- `FIREBASE_SERVICE_ACCOUNT`: full JSON for a service account key with Firebase deploy permissions.
+
+- **Variables**
+	- `FIREBASE_PROJECT_ID`: your Firebase project id (for example `studio-48657765-9f203`).
+	- `FIREBASE_APP_HOSTING_BACKEND_ID` (optional): app hosting backend id to auto-deploy App Hosting.
+
+After these are set, each commit to `main` is linked to a Firebase deploy through the Actions run.

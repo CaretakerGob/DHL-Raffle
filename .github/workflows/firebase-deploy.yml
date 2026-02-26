@@ -1,0 +1,44 @@
+name: Firebase Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      FIREBASE_PROJECT_ID: ${{ vars.FIREBASE_PROJECT_ID }}
+      FIREBASE_APP_HOSTING_BACKEND_ID: ${{ vars.FIREBASE_APP_HOSTING_BACKEND_ID }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Authenticate with service account
+        run: |
+          echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > $HOME/firebase-key.json
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$HOME/firebase-key.json" >> $GITHUB_ENV
+
+      - name: Validate required project id
+        run: |
+          if [ -z "$FIREBASE_PROJECT_ID" ]; then
+            echo "Missing repository variable FIREBASE_PROJECT_ID"
+            exit 1
+          fi
+
+      - name: Deploy Firestore rules and indexes
+        run: firebase deploy --project "$FIREBASE_PROJECT_ID" --only firestore:rules,firestore:indexes --non-interactive
+
+      - name: Deploy Firebase App Hosting backend (optional)
+        if: ${{ vars.FIREBASE_APP_HOSTING_BACKEND_ID != '' }}
+        run: firebase apphosting:backends:deploy "$FIREBASE_APP_HOSTING_BACKEND_ID" --project "$FIREBASE_PROJECT_ID" --non-interactive
