@@ -3,6 +3,7 @@
 import * as _React from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
@@ -60,8 +61,10 @@ import {
 import { ensureFirebaseAuth } from "@/lib/firebase-auth";
 import {
   Building2,
+  Cloud,
   Clock3,
   Gift,
+  HardDrive,
   History,
   Moon,
   Settings,
@@ -117,7 +120,7 @@ export default function RafflePage() {
   const [confirmationTitle, setConfirmationTitle] = _React.useState<string>("");
   const [confirmationMessage, setConfirmationMessage] = _React.useState<string>("");
   const [isDarkMode, setIsDarkMode] = _React.useState<boolean>(false);
-  const [isUsingFirestore, setIsUsingFirestore] = _React.useState<boolean>(false);
+  const [storageMode, setStorageMode] = _React.useState<"checking" | "firebase" | "local">("checking");
 
   const context = _React.useMemo<RaffleContext>(
     () => ({ locationId: activeLocationId, shiftId: activeShiftId }),
@@ -131,9 +134,9 @@ export default function RafflePage() {
 
     const loadData = async () => {
       setIsInitialLoadComplete(false);
+      setStorageMode("checking");
 
       const firestoreEnabled = canUseFirestore();
-      setIsUsingFirestore(firestoreEnabled);
 
       if (!firestoreEnabled) {
         const localEmployees = loadEmployeesForContext(context);
@@ -143,6 +146,7 @@ export default function RafflePage() {
             : createDefaultEmployeesForContext(context);
 
         if (!isCancelled) {
+          setStorageMode("local");
           setAllEmployees(localInitialEmployees);
           setRafflePool(loadPoolForContext(context));
           setWinnerHistory(loadWinnerHistoryForContext(context));
@@ -166,6 +170,7 @@ export default function RafflePage() {
             : createDefaultEmployeesForContext(context);
 
         if (!isCancelled) {
+          setStorageMode("firebase");
           setAllEmployees(initialEmployees);
           setRafflePool(firestoreData?.rafflePool ?? []);
           setWinnerHistory(firestoreData?.winnerHistory ?? []);
@@ -189,6 +194,7 @@ export default function RafflePage() {
             : createDefaultEmployeesForContext(context);
 
         if (!isCancelled) {
+          setStorageMode("local");
           setAllEmployees(localInitialEmployees);
           setRafflePool(loadPoolForContext(context));
           setWinnerHistory(loadWinnerHistoryForContext(context));
@@ -229,7 +235,7 @@ export default function RafflePage() {
   _React.useEffect(() => {
     if (!isInitialLoadComplete) return;
 
-    if (isUsingFirestore) {
+    if (storageMode === "firebase") {
       void saveRaffleContextToFirestore(context, {
         employees: allEmployees,
         rafflePool,
@@ -241,7 +247,7 @@ export default function RafflePage() {
     saveEmployeesForContext(context, allEmployees);
     savePoolForContext(context, rafflePool);
     saveWinnerHistoryForContext(context, winnerHistory);
-  }, [allEmployees, rafflePool, winnerHistory, context, isInitialLoadComplete, isUsingFirestore]);
+  }, [allEmployees, rafflePool, winnerHistory, context, isInitialLoadComplete, storageMode]);
 
   const handleAddEmployeeToPool = (employeeId: string) => {
     const employeeToAdd = allEmployees.find((employee) => employee.id === employeeId);
@@ -459,13 +465,26 @@ export default function RafflePage() {
         </header>
 
         <main className="w-full max-w-xl space-y-6 sm:space-y-8">
-          {!isUsingFirestore && (
-            <Card className="border-destructive/40 bg-card/90">
-              <CardContent className="pt-5 text-sm text-muted-foreground">
-                Firebase is not configured. Data is currently saving to this browser only.
-              </CardContent>
-            </Card>
-          )}
+          <Card className="bg-card/90">
+            <CardContent className="pt-5">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm text-muted-foreground">Storage Status</p>
+                {storageMode === "firebase" && (
+                  <Badge variant="default" className="inline-flex items-center gap-1.5">
+                    <Cloud className="h-3.5 w-3.5" />
+                    Firebase Connected
+                  </Badge>
+                )}
+                {storageMode === "local" && (
+                  <Badge variant="secondary" className="inline-flex items-center gap-1.5">
+                    <HardDrive className="h-3.5 w-3.5" />
+                    Local Storage Fallback
+                  </Badge>
+                )}
+                {storageMode === "checking" && <Badge variant="outline">Checking...</Badge>}
+              </div>
+            </CardContent>
+          </Card>
 
           <div className="flex justify-center">
             <div className="inline-flex items-center gap-3 rounded-lg border border-white/20 bg-card/90 px-4 py-2 shadow-md backdrop-blur-md">
