@@ -1,7 +1,7 @@
 
 "use client";
 
-import type { Employee } from "@/types/employee";
+import type { Employee, RaffleContext } from "@/types/employee";
 import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,7 @@ import { UserPlus, PlusCircle, Trash2, Users, RefreshCcw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface EmployeeSelectorProps {
+  context: RaffleContext;
   allEmployees: Employee[];
   setAllEmployees: React.Dispatch<React.SetStateAction<Employee[]>>;
   availableEmployeesForSelection: Employee[];
@@ -28,6 +29,7 @@ interface EmployeeSelectorProps {
 }
 
 export function EmployeeSelector({
+  context,
   allEmployees,
   setAllEmployees,
   availableEmployeesForSelection,
@@ -37,6 +39,7 @@ export function EmployeeSelector({
   onRestoreDefaultEmployees
 }: EmployeeSelectorProps) {
   const [stagedEmployeeIdForDropdown, setStagedEmployeeIdForDropdown] = React.useState<string>("");
+  const [newEmployeeBadgeIdInput, setNewEmployeeBadgeIdInput] = React.useState<string>("");
   const [newEmployeeNameInput, setNewEmployeeNameInput] = React.useState<string>("");
   const [newEmployeeCategory, setNewEmployeeCategory] = React.useState<'employee' | 'leadership'>('employee');
   const { toast } = useToast();
@@ -62,7 +65,18 @@ export function EmployeeSelector({
   };
 
   const handleCreateAndAddEmployee = () => {
+    const trimmedBadgeId = newEmployeeBadgeIdInput.trim();
     const trimmedName = newEmployeeNameInput.trim();
+
+    if (!trimmedBadgeId) {
+      toast({
+        title: "Invalid Employee ID",
+        description: "Employee ID / badge number cannot be empty.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!trimmedName) {
       toast({
         title: "Invalid Name",
@@ -72,14 +86,14 @@ export function EmployeeSelector({
       return;
     }
 
-    const nameExists = allEmployees.some(
-      (emp) => emp.name.toLowerCase() === trimmedName.toLowerCase()
+    const employeeIdExists = allEmployees.some(
+      (emp) => emp.employeeId.toLowerCase() === trimmedBadgeId.toLowerCase()
     );
 
-    if (nameExists) {
+    if (employeeIdExists) {
       toast({
-        title: "Duplicate Name",
-        description: `An employee named "${trimmedName}" already exists.`,
+        title: "Duplicate Employee ID",
+        description: `An employee with ID "${trimmedBadgeId}" already exists in this location and shift.`,
         variant: "destructive",
       });
       return;
@@ -87,15 +101,19 @@ export function EmployeeSelector({
 
     const newEmployee: Employee = {
       id: Date.now().toString() + '-' + Math.random().toString(36).substring(2, 7),
+      employeeId: trimmedBadgeId,
       name: trimmedName,
       category: newEmployeeCategory,
+      locationId: context.locationId,
+      shiftId: context.shiftId,
     };
 
     setAllEmployees((prevAllEmployees) => [...prevAllEmployees, newEmployee].sort((a,b) => a.name.localeCompare(b.name)));
     toast({
       title: "Employee Created",
-      description: `${newEmployee.name} (${newEmployee.category}) has been added.`,
+      description: `${newEmployee.name} (${newEmployee.employeeId}) has been added.`,
     });
+    setNewEmployeeBadgeIdInput("");
     setNewEmployeeNameInput("");
     setNewEmployeeCategory("employee"); 
   };
@@ -124,7 +142,7 @@ export function EmployeeSelector({
             ) : (
               sortedAvailableEmployeesForDropdown.map(employee => (
                 <SelectItem key={employee.id} value={employee.id}>
-                  {employee.name}
+                  {employee.name} ({employee.employeeId})
                 </SelectItem>
               ))
             )}
@@ -134,6 +152,18 @@ export function EmployeeSelector({
 
       <div className="pt-2 space-y-3">
         <h3 className="text-sm font-medium mb-2 text-muted-foreground flex items-center"><PlusCircle className="mr-2 h-4 w-4" />Create New Employee</h3>
+        <div>
+          <Label htmlFor="new-employee-badge-id" className="text-xs text-muted-foreground">Employee ID / Badge Number</Label>
+          <Input
+            id="new-employee-badge-id"
+            type="text"
+            placeholder="E.g., EMP-10231"
+            value={newEmployeeBadgeIdInput}
+            onChange={(e) => setNewEmployeeBadgeIdInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') handleCreateAndAddEmployee();}}
+            className="flex-grow mt-1"
+          />
+        </div>
         <div>
           <Label htmlFor="new-employee-name" className="text-xs text-muted-foreground">Name</Label>
           <Input
@@ -203,6 +233,7 @@ export function EmployeeSelector({
                 <div key={employee.id} className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50 text-sm">
                   <div className="flex items-center">
                     <span className="text-foreground">{employee.name}</span>
+                    <span className="ml-2 text-xs text-muted-foreground">({employee.employeeId})</span>
                     <span className="ml-2 text-xs px-1.5 py-0.5 rounded-full bg-secondary text-secondary-foreground">
                       {employee.category.charAt(0).toUpperCase() + employee.category.slice(1)}
                     </span>

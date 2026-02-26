@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as _React from "react";
@@ -25,17 +24,52 @@ import {
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { EmployeeSelector } from "@/components/employee-selector";
 import { RafflePool } from "@/components/raffle-pool";
 import { WinnerDisplay } from "@/components/winner-display";
 import { Confetti } from "@/components/confetti";
-import type { Employee } from "@/types/employee";
+import type { Employee, RaffleContext, WinnerRecord } from "@/types/employee";
 import { useToast } from "@/hooks/use-toast";
 import { DEFAULT_EMPLOYEES } from "@/data/default-employees";
-import { Settings, Trophy, Gift, Moon, Sun } from "lucide-react";
+import {
+  DEFAULT_LOCATION_ID,
+  DEFAULT_SHIFT_ID,
+  SHIFT_OPTIONS,
+  WAREHOUSE_LOCATIONS,
+} from "@/data/raffle-context";
+import {
+  loadEmployeesForContext,
+  loadPoolForContext,
+  loadWinnerHistoryForContext,
+  saveEmployeesForContext,
+  savePoolForContext,
+  saveWinnerHistoryForContext,
+} from "@/lib/raffle-storage";
+import {
+  canUseFirestore,
+  loadRaffleContextFromFirestore,
+  saveRaffleContextToFirestore,
+} from "@/lib/raffle-firestore";
+import { ensureFirebaseAuth } from "@/lib/firebase-auth";
+import {
+  Building2,
+  Clock3,
+  Gift,
+  History,
+  Moon,
+  Settings,
+  Sun,
+  Trophy,
+} from "lucide-react";
 
-const LOCAL_STORAGE_EMPLOYEES_KEY = 'dhlRaffleEmployeesV2';
-const LOCAL_STORAGE_THEME_KEY = 'dhlRaffleTheme';
+const LOCAL_STORAGE_THEME_KEY = "dhlRaffleTheme";
 
 const generateId = (prefix: string, index: number): string => {
   const randomPart = Math.random().toString(36).substring(2, 10);
@@ -43,104 +77,183 @@ const generateId = (prefix: string, index: number): string => {
   return `${prefix}-${index + 1}-${timestampPart}-${randomPart}`;
 };
 
-type ConfirmationAction = 
-  | null 
-  | { type: 'deleteAll' } 
-  | { type: 'deleteSingle', employeeId: string, employeeName: string }
-  | { type: 'restoreDefaults' };
+type ConfirmationAction =
+  | null
+  | { type: "deleteAll" }
+  | { type: "deleteSingle"; employeeId: string; employeeName: string }
+  | { type: "restoreDefaults" };
 
+const createDefaultEmployeesForContext = (context: RaffleContext): Employee[] => {
+  return DEFAULT_EMPLOYEES.map((employee, index) => ({
+    ...employee,
+    id: generateId("default", index),
+    employeeId: `${employee.employeeId}-${context.locationId}-${context.shiftId}`,
+    locationId: context.locationId,
+    shiftId: context.shiftId,
+  })).sort((a, b) => a.name.localeCompare(b.name));
+};
 
 export default function RafflePage() {
+  const [activeLocationId, setActiveLocationId] = _React.useState<string>(DEFAULT_LOCATION_ID);
+  const [activeShiftId, setActiveShiftId] = _React.useState<string>(DEFAULT_SHIFT_ID);
+
   const [allEmployees, setAllEmployees] = _React.useState<Employee[]>([]);
   const [rafflePool, setRafflePool] = _React.useState<Employee[]>([]);
   const [winner, setWinner] = _React.useState<Employee | null>(null);
+  const [winnerHistory, setWinnerHistory] = _React.useState<WinnerRecord[]>([]);
+
   const [prizeName, setPrizeName] = _React.useState<string>("");
   const [isDrawing, setIsDrawing] = _React.useState<boolean>(false);
   const [showConfetti, setShowConfetti] = _React.useState<boolean>(false);
   const [showWinnerModal, setShowWinnerModal] = _React.useState<boolean>(false);
   const [showManageEmployeesModal, setShowManageEmployeesModal] = _React.useState<boolean>(false);
+  const [isInitialLoadComplete, setIsInitialLoadComplete] = _React.useState<boolean>(false);
+
   const modalTimerRef = _React.useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
-  const [isInitialLoadComplete, setIsInitialLoadComplete] = _React.useState<boolean>(false);
 
   const [showConfirmationDialog, setShowConfirmationDialog] = _React.useState<boolean>(false);
   const [confirmationAction, setConfirmationAction] = _React.useState<ConfirmationAction>(null);
   const [confirmationTitle, setConfirmationTitle] = _React.useState<string>("");
   const [confirmationMessage, setConfirmationMessage] = _React.useState<string>("");
   const [isDarkMode, setIsDarkMode] = _React.useState<boolean>(false);
+  const [isUsingFirestore, setIsUsingFirestore] = _React.useState<boolean>(false);
 
+  const context = _React.useMemo<RaffleContext>(
+    () => ({ locationId: activeLocationId, shiftId: activeShiftId }),
+    [activeLocationId, activeShiftId]
+  );
 
   _React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const storedEmployeesJson = localStorage.getItem(LOCAL_STORAGE_EMPLOYEES_KEY);
-      let dataToSetStateWith: Employee[];
-      console.log('[RafflePage] Initial load: reading from localStorage. Key:', LOCAL_STORAGE_EMPLOYEES_KEY);
+    if (typeof window === "undefined") return;
 
-      if (storedEmployeesJson) {
-        console.log('[RafflePage] Initial load: Found stored employees JSON:', storedEmployeesJson);
-        try {
-          const parsedEmployees = JSON.parse(storedEmployeesJson) as Partial<Employee>[];
-          dataToSetStateWith = parsedEmployees.map((emp, index) => ({
-            id: emp.id || generateId('migrated', index),
-            name: emp.name || 'Unknown Employee',
-            category: emp.category || 'employee',
-          })) as Employee[];
-          console.log('[RafflePage] Initial load: Parsed employees successfully:', dataToSetStateWith);
-        } catch (error) {
-          console.error("[RafflePage] Initial load: Error parsing employees from localStorage. Clearing stored data and using default data:", error);
-          localStorage.removeItem(LOCAL_STORAGE_EMPLOYEES_KEY);
-          dataToSetStateWith = [...DEFAULT_EMPLOYEES].sort((a, b) => a.name.localeCompare(b.name));
+    let isCancelled = false;
+
+    const loadData = async () => {
+      setIsInitialLoadComplete(false);
+
+      const firestoreEnabled = canUseFirestore();
+      setIsUsingFirestore(firestoreEnabled);
+
+      if (!firestoreEnabled) {
+        const localEmployees = loadEmployeesForContext(context);
+        const localInitialEmployees =
+          localEmployees.length > 0
+            ? localEmployees
+            : createDefaultEmployeesForContext(context);
+
+        if (!isCancelled) {
+          setAllEmployees(localInitialEmployees);
+          setRafflePool(loadPoolForContext(context));
+          setWinnerHistory(loadWinnerHistoryForContext(context));
+          setWinner(null);
+          setPrizeName("");
+          setIsInitialLoadComplete(true);
         }
-      } else {
-        console.log('[RafflePage] Initial load: No stored employees found. Using default data.');
-        dataToSetStateWith = [...DEFAULT_EMPLOYEES].sort((a, b) => a.name.localeCompare(b.name));
+        return;
       }
-      setAllEmployees(dataToSetStateWith);
-      setIsInitialLoadComplete(true); 
-      console.log('[RafflePage] Initial load: Completed. isInitialLoadComplete set to true.');
-    }
-  }, []);
+
+      try {
+        const isAuthenticated = await ensureFirebaseAuth();
+        if (!isAuthenticated) {
+          throw new Error("Firebase Auth failed");
+        }
+
+        const firestoreData = await loadRaffleContextFromFirestore(context);
+        const initialEmployees =
+          firestoreData && firestoreData.employees.length > 0
+            ? firestoreData.employees
+            : createDefaultEmployeesForContext(context);
+
+        if (!isCancelled) {
+          setAllEmployees(initialEmployees);
+          setRafflePool(firestoreData?.rafflePool ?? []);
+          setWinnerHistory(firestoreData?.winnerHistory ?? []);
+          setWinner(null);
+          setPrizeName("");
+          setIsInitialLoadComplete(true);
+        }
+
+        if (!firestoreData && initialEmployees.length > 0) {
+          await saveRaffleContextToFirestore(context, {
+            employees: initialEmployees,
+            rafflePool: [],
+            winnerHistory: [],
+          });
+        }
+      } catch {
+        const localEmployees = loadEmployeesForContext(context);
+        const localInitialEmployees =
+          localEmployees.length > 0
+            ? localEmployees
+            : createDefaultEmployeesForContext(context);
+
+        if (!isCancelled) {
+          setAllEmployees(localInitialEmployees);
+          setRafflePool(loadPoolForContext(context));
+          setWinnerHistory(loadWinnerHistoryForContext(context));
+          setWinner(null);
+          setPrizeName("");
+          setIsInitialLoadComplete(true);
+        }
+
+        toast({
+          title: "Firebase unavailable",
+          description: "Falling back to local storage for now.",
+          variant: "destructive",
+        });
+      }
+    };
+
+    loadData();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [context]);
 
   _React.useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
     const storedTheme = localStorage.getItem(LOCAL_STORAGE_THEME_KEY);
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const shouldUseDark = storedTheme ? storedTheme === 'dark' : prefersDark;
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const shouldUseDark = storedTheme ? storedTheme === "dark" : prefersDark;
     setIsDarkMode(shouldUseDark);
   }, []);
 
   _React.useEffect(() => {
-    if (typeof window === 'undefined') return;
-    document.documentElement.classList.toggle('dark', isDarkMode);
-    localStorage.setItem(LOCAL_STORAGE_THEME_KEY, isDarkMode ? 'dark' : 'light');
+    if (typeof window === "undefined") return;
+    document.documentElement.classList.toggle("dark", isDarkMode);
+    localStorage.setItem(LOCAL_STORAGE_THEME_KEY, isDarkMode ? "dark" : "light");
   }, [isDarkMode]);
 
   _React.useEffect(() => {
-    console.log('[RafflePage] Persistence Effect: Triggered. isInitialLoadComplete:', isInitialLoadComplete, 'Number of employees:', allEmployees.length);
-    if (typeof window !== 'undefined' && isInitialLoadComplete) {
-      console.log('[RafflePage] Persistence Effect: Conditions met. Attempting to save to localStorage. Key:', LOCAL_STORAGE_EMPLOYEES_KEY);
-      try {
-        localStorage.setItem(LOCAL_STORAGE_EMPLOYEES_KEY, JSON.stringify(allEmployees));
-        console.log('[RafflePage] Persistence Effect: Successfully saved employees to localStorage:', allEmployees);
-      } catch (error) {
-        console.error('[RafflePage] Persistence Effect: Error saving employees to localStorage:', error);
-      }
-    } else {
-      console.log('[RafflePage] Persistence Effect: Conditions NOT met for saving. isInitialLoadComplete:', isInitialLoadComplete);
-    }
-  }, [allEmployees, isInitialLoadComplete]);
+    if (!isInitialLoadComplete) return;
 
+    if (isUsingFirestore) {
+      void saveRaffleContextToFirestore(context, {
+        employees: allEmployees,
+        rafflePool,
+        winnerHistory,
+      });
+      return;
+    }
+
+    saveEmployeesForContext(context, allEmployees);
+    savePoolForContext(context, rafflePool);
+    saveWinnerHistoryForContext(context, winnerHistory);
+  }, [allEmployees, rafflePool, winnerHistory, context, isInitialLoadComplete, isUsingFirestore]);
 
   const handleAddEmployeeToPool = (employeeId: string) => {
-    const employeeToAdd = allEmployees.find((emp) => emp.id === employeeId);
-    if (employeeToAdd && !rafflePool.find((emp) => emp.id === employeeId)) {
-      setRafflePool((prevPool) => [...prevPool, employeeToAdd]);
+    const employeeToAdd = allEmployees.find((employee) => employee.id === employeeId);
+    if (employeeToAdd && !rafflePool.some((employee) => employee.id === employeeId)) {
+      setRafflePool((previousPool) => [...previousPool, employeeToAdd]);
     }
   };
 
   const handleRemoveEmployeeFromPool = (employeeId: string) => {
-    const employeeToRemove = rafflePool.find(emp => emp.id === employeeId);
-    setRafflePool((prevPool) => prevPool.filter((emp) => emp.id !== employeeId));
+    const employeeToRemove = rafflePool.find((employee) => employee.id === employeeId);
+    setRafflePool((previousPool) => previousPool.filter((employee) => employee.id !== employeeId));
+
     if (employeeToRemove) {
       toast({
         title: "Employee Removed from Pool",
@@ -149,117 +262,102 @@ export default function RafflePage() {
     }
   };
 
- const executeDeleteSingleEmployee = (employeeId: string) => {
+  const executeDeleteSingleEmployee = (employeeId: string) => {
     let employeeNameForToast: string | undefined;
-    console.log(`[RafflePage] Attempting to delete employee with ID: ${employeeId}`);
 
-    setAllEmployees(prevAllEmployees => {
-      const employeeFound = prevAllEmployees.find(emp => emp.id === employeeId);
-      if (employeeFound) {
-        employeeNameForToast = employeeFound.name;
-        console.log(`[RafflePage] Found employee for deletion: ${employeeNameForToast}`);
-      } else {
-         console.warn(`[RafflePage] handleDelete: Employee with ID ${employeeId} not found in 'allEmployees' state for toast message. Current count: ${prevAllEmployees.length}`);
-      }
-      const newList = prevAllEmployees.filter(emp => emp.id !== employeeId);
-      console.log(`[RafflePage] New employee list after filter (length ${newList.length}):`, newList);
-      return newList;
+    setAllEmployees((previousEmployees) => {
+      const employeeFound = previousEmployees.find((employee) => employee.id === employeeId);
+      employeeNameForToast = employeeFound?.name;
+      return previousEmployees.filter((employee) => employee.id !== employeeId);
     });
 
-    setRafflePool(prevPool => prevPool.filter(emp => emp.id !== employeeId));
+    setRafflePool((previousPool) => previousPool.filter((employee) => employee.id !== employeeId));
 
     if (employeeNameForToast) {
-      console.log(`[RafflePage] Employee ${employeeNameForToast} removed from system.`);
       toast({
         title: "Employee Removed",
         description: `${employeeNameForToast} has been removed from the system and the raffle pool.`,
         variant: "destructive",
       });
-    } else {
-      console.log(`[RafflePage] Employee with ID ${employeeId} not found or already removed.`);
-      toast({
-        title: "Employee Not Found or Already Removed",
-        description: `Employee with ID ${employeeId} could not be removed or was already gone.`,
-        variant: "destructive",
-      });
+      return;
     }
+
+    toast({
+      title: "Employee Not Found or Already Removed",
+      description: `Employee with ID ${employeeId} could not be removed or was already gone.`,
+      variant: "destructive",
+    });
   };
 
   const requestDeleteSingleEmployee = (employeeId: string, employeeName: string) => {
     setConfirmationTitle("Confirm Deletion");
-    setConfirmationMessage(`Are you sure you want to permanently remove ${employeeName} from the system? This action cannot be undone.`);
-    setConfirmationAction({ type: 'deleteSingle', employeeId, employeeName });
+    setConfirmationMessage(
+      `Are you sure you want to permanently remove ${employeeName} from ${context.locationId} / ${context.shiftId}?`
+    );
+    setConfirmationAction({ type: "deleteSingle", employeeId, employeeName });
     setShowConfirmationDialog(true);
   };
 
   const handleDeleteAllEmployeesRequest = () => {
-    console.log('[RafflePage] Attempting to delete all employees.');
     if (allEmployees.length === 0) {
-      console.log('[RafflePage] No employees to delete.');
       toast({
         title: "No Employees",
-        description: "There are no employees in the system to delete.",
+        description: "There are no employees in this location and shift to delete.",
       });
       return;
     }
+
     setConfirmationTitle("Confirm Delete All");
-    setConfirmationMessage("Are you sure you want to permanently remove ALL employees from the system? This action cannot be undone.");
-    setConfirmationAction({ type: 'deleteAll' });
+    setConfirmationMessage(
+      `Are you sure you want to permanently remove ALL employees for ${context.locationId} / ${context.shiftId}?`
+    );
+    setConfirmationAction({ type: "deleteAll" });
     setShowConfirmationDialog(true);
   };
 
   const handleRestoreDefaultEmployeesRequest = () => {
-    if (DEFAULT_EMPLOYEES.length === 0) {
-        toast({
-            title: "No Default Employees",
-            description: "There is no default employee list configured.",
-        });
-        return;
-    }
     setConfirmationTitle("Confirm Restore Defaults");
-    setConfirmationMessage("Are you sure you want to replace all current employees with the default list? This action cannot be undone and will also clear the current raffle pool.");
-    setConfirmationAction({ type: 'restoreDefaults' });
+    setConfirmationMessage(
+      "Restore default employees for the current location and shift? This also clears the current raffle pool."
+    );
+    setConfirmationAction({ type: "restoreDefaults" });
     setShowConfirmationDialog(true);
   };
 
   const handleConfirmAction = () => {
     if (!confirmationAction) return;
 
-    if (confirmationAction.type === 'deleteAll') {
-      console.log('[RafflePage] Confirmed deletion of all employees.');
+    if (confirmationAction.type === "deleteAll") {
       setAllEmployees([]);
       setRafflePool([]);
-      console.log('[RafflePage] All employees state set to empty.');
       toast({
         title: "All Employees Removed",
-        description: "All employees have been removed from the system and the raffle pool.",
+        description: "All employees have been removed from this location and shift.",
         variant: "destructive",
-      });
-    } else if (confirmationAction.type === 'deleteSingle') {
-      console.log(`[RafflePage] Confirmed deletion of single employee: ${confirmationAction.employeeName}`);
-      executeDeleteSingleEmployee(confirmationAction.employeeId);
-    } else if (confirmationAction.type === 'restoreDefaults') {
-      console.log('[RafflePage] Confirmed restoration of default employees.');
-      setAllEmployees([...DEFAULT_EMPLOYEES].sort((a, b) => a.name.localeCompare(b.name)));
-      setRafflePool([]);
-      console.log('[RafflePage] Employee list restored to defaults.');
-      toast({
-        title: "Defaults Restored",
-        description: "The employee list has been restored to the default set. The raffle pool has been cleared.",
       });
     }
 
+    if (confirmationAction.type === "deleteSingle") {
+      executeDeleteSingleEmployee(confirmationAction.employeeId);
+    }
+
+    if (confirmationAction.type === "restoreDefaults") {
+      setAllEmployees(createDefaultEmployeesForContext(context));
+      setRafflePool([]);
+      toast({
+        title: "Defaults Restored",
+        description: "Employee defaults were restored for this location and shift.",
+      });
+    }
 
     setShowConfirmationDialog(false);
     setConfirmationAction(null);
   };
 
   const handleCancelAction = () => {
-    console.log('[RafflePage] Cancelled action from dialog.');
     setShowConfirmationDialog(false);
     setConfirmationAction(null);
   };
-
 
   const handleDrawWinner = () => {
     if (rafflePool.length === 0) {
@@ -274,9 +372,11 @@ export default function RafflePage() {
     setIsDrawing(true);
     setWinner(null);
     setShowWinnerModal(false);
+
     if (modalTimerRef.current) {
       clearTimeout(modalTimerRef.current);
     }
+
     setShowConfetti(false);
 
     toast({
@@ -286,18 +386,31 @@ export default function RafflePage() {
 
     setTimeout(() => {
       const randomIndex = Math.floor(Math.random() * rafflePool.length);
-      const newWinner = rafflePool[randomIndex];
-      setWinner(newWinner);
+      const selectedWinner = rafflePool[randomIndex];
+
+      setWinner(selectedWinner);
       setShowWinnerModal(true);
       setShowConfetti(true);
       setIsDrawing(false);
+      setRafflePool([]);
 
-      setRafflePool([]); 
+      const historyRecord: WinnerRecord = {
+        id: generateId("winner", winnerHistory.length),
+        employeeId: selectedWinner.employeeId,
+        employeeName: selectedWinner.name,
+        prizeName: prizeName.trim() || undefined,
+        drawnAt: new Date().toISOString(),
+        locationId: context.locationId,
+        shiftId: context.shiftId,
+      };
+
+      const nextHistory = [historyRecord, ...winnerHistory].slice(0, 20);
+      setWinnerHistory(nextHistory);
 
       toast({
         title: "Winner Selected!",
-        description: `Congratulations to ${newWinner.name}! ${prizeName ? `They won: ${prizeName}.` : ''} The raffle pool has been cleared.`,
-        duration: 7000, 
+        description: `Congratulations to ${selectedWinner.name}! ${prizeName ? `They won: ${prizeName}.` : ""} The raffle pool has been cleared.`,
+        duration: 7000,
       });
 
       modalTimerRef.current = setTimeout(() => {
@@ -307,7 +420,6 @@ export default function RafflePage() {
       setTimeout(() => {
         setShowConfetti(false);
       }, 6000);
-
     }, 2500);
   };
 
@@ -320,7 +432,7 @@ export default function RafflePage() {
   }, []);
 
   const availableToAddToPoolEmployees = allEmployees.filter(
-    (emp) => !rafflePool.find((pEmp) => pEmp.id === emp.id)
+    (employee) => !rafflePool.find((poolEmployee) => poolEmployee.id === employee.id)
   );
 
   return (
@@ -341,30 +453,75 @@ export default function RafflePage() {
               width={350}
               height={100}
               priority
-              style={{ width: 'auto', height: 'auto' }}
+              style={{ width: "auto", height: "auto" }}
             />
           </div>
         </header>
 
         <main className="w-full max-w-xl space-y-6 sm:space-y-8">
+          {!isUsingFirestore && (
+            <Card className="border-destructive/40 bg-card/90">
+              <CardContent className="pt-5 text-sm text-muted-foreground">
+                Firebase is not configured. Data is currently saving to this browser only.
+              </CardContent>
+            </Card>
+          )}
+
           <div className="flex justify-center">
             <div className="inline-flex items-center gap-3 rounded-lg border border-white/20 bg-card/90 px-4 py-2 shadow-md backdrop-blur-md">
               <Sun className="h-4 w-4 text-muted-foreground" />
-              <Switch
-                checked={isDarkMode}
-                onCheckedChange={setIsDarkMode}
-                aria-label="Toggle dark mode"
-              />
+              <Switch checked={isDarkMode} onCheckedChange={setIsDarkMode} aria-label="Toggle dark mode" />
               <Moon className="h-4 w-4 text-muted-foreground" />
             </div>
           </div>
 
+          <Card className="shadow-lg bg-card/90 backdrop-blur-md border border-white/20">
+            <CardHeader>
+              <CardTitle className="text-xl sm:text-2xl text-center sm:text-left">Raffle Context</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <p className="mb-2 text-sm text-muted-foreground flex items-center">
+                  <Building2 className="mr-2 h-4 w-4" />
+                  Location
+                </p>
+                <Select value={activeLocationId} onValueChange={setActiveLocationId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select location" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {WAREHOUSE_LOCATIONS.map((location) => (
+                      <SelectItem key={location.id} value={location.id}>
+                        {location.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <p className="mb-2 text-sm text-muted-foreground flex items-center">
+                  <Clock3 className="mr-2 h-4 w-4" />
+                  Shift
+                </p>
+                <Select value={activeShiftId} onValueChange={setActiveShiftId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select shift" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SHIFT_OPTIONS.map((shift) => (
+                      <SelectItem key={shift.id} value={shift.id}>
+                        {shift.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
+
           <div className="text-center">
-            <Button
-              variant="default"
-              onClick={() => setShowManageEmployeesModal(true)}
-              className="shadow-md"
-            >
+            <Button variant="default" onClick={() => setShowManageEmployeesModal(true)} className="shadow-md">
               <Settings className="mr-2 h-5 w-5" />
               Manage Employees
             </Button>
@@ -375,13 +532,14 @@ export default function RafflePage() {
               <DialogHeader className="p-6 pb-4">
                 <DialogTitle className="text-xl sm:text-2xl text-primary">Manage Employees</DialogTitle>
                 <DialogDescription>
-                  Add, create, or remove employees from the system. You can also restore the default list.
+                  Manage employees for this location and shift using employee badge IDs.
                 </DialogDescription>
               </DialogHeader>
               <ScrollArea className="flex-1">
                 <div className="px-6 pb-6">
                   {isInitialLoadComplete ? (
                     <EmployeeSelector
+                      context={context}
                       allEmployees={allEmployees}
                       setAllEmployees={setAllEmployees}
                       availableEmployeesForSelection={availableToAddToPoolEmployees}
@@ -410,7 +568,7 @@ export default function RafflePage() {
                 type="text"
                 placeholder="E.g., $50 Gift Card, Extra Day Off"
                 value={prizeName}
-                onChange={(e) => setPrizeName(e.target.value)}
+                onChange={(event) => setPrizeName(event.target.value)}
                 className="w-full"
               />
             </CardContent>
@@ -419,14 +577,11 @@ export default function RafflePage() {
           <Card className="shadow-lg bg-card/90 backdrop-blur-md border border-white/20">
             <CardHeader>
               <CardTitle className="text-xl sm:text-2xl text-center sm:text-left">
-                Raffle Pool ({rafflePool.length} participant{rafflePool.length === 1 ? '' : 's'})
+                Raffle Pool ({rafflePool.length} participant{rafflePool.length === 1 ? "" : "s"})
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <RafflePool
-                pooledEmployees={rafflePool}
-                onRemoveEmployee={handleRemoveEmployeeFromPool}
-              />
+              <RafflePool pooledEmployees={rafflePool} onRemoveEmployee={handleRemoveEmployeeFromPool} />
             </CardContent>
           </Card>
 
@@ -437,7 +592,7 @@ export default function RafflePage() {
               className="bg-accent text-accent-foreground hover:bg-accent/90 px-8 py-3 text-lg rounded-lg shadow-md transform hover:scale-105 transition-transform duration-150 ease-in-out"
               size="lg"
             >
-              {isDrawing ? 'Drawing...' : 'Draw Winner!'}
+              {isDrawing ? "Drawing..." : "Draw Winner!"}
             </Button>
           </div>
 
@@ -451,12 +606,21 @@ export default function RafflePage() {
             <DialogContent className="sm:max-w-md bg-card/95 backdrop-blur-xl border-white/20 text-center p-6 rounded-xl shadow-2xl">
               <DialogHeader className="pt-4">
                 <div className="flex items-center justify-center mb-4 animate-winner-reveal">
-                  <Trophy className="h-24 w-24 text-accent drop-shadow-[0_4px_10px_hsl(var(--accent)/0.5)]" strokeWidth={1.5} />
+                  <Trophy
+                    className="h-24 w-24 text-accent drop-shadow-[0_4px_10px_hsl(var(--accent)/0.5)]"
+                    strokeWidth={1.5}
+                  />
                 </div>
-                <DialogTitle className="text-4xl sm:text-5xl font-bold text-card-foreground animate-winner-reveal" style={{ animationDelay: '0.2s' }}>
+                <DialogTitle
+                  className="text-4xl sm:text-5xl font-bold text-card-foreground animate-winner-reveal"
+                  style={{ animationDelay: "0.2s" }}
+                >
                   {winner?.name}
                 </DialogTitle>
-                <DialogDescription className="text-xl text-card-foreground/90 mt-3 animate-winner-reveal" style={{ animationDelay: '0.4s' }}>
+                <DialogDescription
+                  className="text-xl text-card-foreground/90 mt-3 animate-winner-reveal"
+                  style={{ animationDelay: "0.4s" }}
+                >
                   Congratulations!
                   {prizeName && winner && (
                     <span className="block mt-2 text-lg">
@@ -467,14 +631,42 @@ export default function RafflePage() {
               </DialogHeader>
             </DialogContent>
           </Dialog>
-          
+
+          <Card className="shadow-lg bg-card/90 backdrop-blur-md border border-white/20">
+            <CardHeader>
+              <CardTitle className="text-xl sm:text-2xl text-center sm:text-left flex items-center">
+                <History className="mr-2 h-6 w-6 text-primary" />
+                Winner History ({winnerHistory.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {winnerHistory.length === 0 ? (
+                <p className="text-muted-foreground text-sm">No winners recorded yet for this location and shift.</p>
+              ) : (
+                <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                  {winnerHistory.map((historyItem) => (
+                    <div key={historyItem.id} className="rounded-md border border-border p-3 text-sm">
+                      <p className="font-medium text-foreground">
+                        {historyItem.employeeName} ({historyItem.employeeId})
+                      </p>
+                      <p className="text-muted-foreground">
+                        {historyItem.prizeName ? `Prize: ${historyItem.prizeName}` : "Prize: Not specified"}
+                      </p>
+                      <p className="text-muted-foreground text-xs">
+                        Drawn: {new Date(historyItem.drawnAt).toLocaleString()}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           <AlertDialog open={showConfirmationDialog} onOpenChange={setShowConfirmationDialog}>
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>{confirmationTitle}</AlertDialogTitle>
-                <AlertDialogDescription>
-                  {confirmationMessage}
-                </AlertDialogDescription>
+                <AlertDialogDescription>{confirmationMessage}</AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel onClick={handleCancelAction}>Cancel</AlertDialogCancel>
@@ -482,7 +674,6 @@ export default function RafflePage() {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
-
 
           {!isDrawing && winner && !showWinnerModal && (
             <div className="mt-8 sm:mt-12">
@@ -498,11 +689,3 @@ export default function RafflePage() {
     </div>
   );
 }
-    
-
-    
-
-    
-
-
-
