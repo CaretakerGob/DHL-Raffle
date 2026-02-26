@@ -23,6 +23,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { EmployeeSelector } from "@/components/employee-selector";
 import { RafflePool } from "@/components/raffle-pool";
@@ -31,9 +32,10 @@ import { Confetti } from "@/components/confetti";
 import type { Employee } from "@/types/employee";
 import { useToast } from "@/hooks/use-toast";
 import { DEFAULT_EMPLOYEES } from "@/data/default-employees";
-import { Settings, Trophy, Gift } from "lucide-react";
+import { Settings, Trophy, Gift, Moon, Sun } from "lucide-react";
 
 const LOCAL_STORAGE_EMPLOYEES_KEY = 'dhlRaffleEmployeesV2';
+const LOCAL_STORAGE_THEME_KEY = 'dhlRaffleTheme';
 
 const generateId = (prefix: string, index: number): string => {
   const randomPart = Math.random().toString(36).substring(2, 10);
@@ -65,6 +67,7 @@ export default function RafflePage() {
   const [confirmationAction, setConfirmationAction] = _React.useState<ConfirmationAction>(null);
   const [confirmationTitle, setConfirmationTitle] = _React.useState<string>("");
   const [confirmationMessage, setConfirmationMessage] = _React.useState<string>("");
+  const [isDarkMode, setIsDarkMode] = _React.useState<boolean>(false);
 
 
   _React.useEffect(() => {
@@ -97,6 +100,20 @@ export default function RafflePage() {
       console.log('[RafflePage] Initial load: Completed. isInitialLoadComplete set to true.');
     }
   }, []);
+
+  _React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const storedTheme = localStorage.getItem(LOCAL_STORAGE_THEME_KEY);
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const shouldUseDark = storedTheme ? storedTheme === 'dark' : prefersDark;
+    setIsDarkMode(shouldUseDark);
+  }, []);
+
+  _React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    document.documentElement.classList.toggle('dark', isDarkMode);
+    localStorage.setItem(LOCAL_STORAGE_THEME_KEY, isDarkMode ? 'dark' : 'light');
+  }, [isDarkMode]);
 
   _React.useEffect(() => {
     console.log('[RafflePage] Persistence Effect: Triggered. isInitialLoadComplete:', isInitialLoadComplete, 'Number of employees:', allEmployees.length);
@@ -330,6 +347,18 @@ export default function RafflePage() {
         </header>
 
         <main className="w-full max-w-xl space-y-6 sm:space-y-8">
+          <div className="flex justify-center">
+            <div className="inline-flex items-center gap-3 rounded-lg border border-white/20 bg-card/90 px-4 py-2 shadow-md backdrop-blur-md">
+              <Sun className="h-4 w-4 text-muted-foreground" />
+              <Switch
+                checked={isDarkMode}
+                onCheckedChange={setIsDarkMode}
+                aria-label="Toggle dark mode"
+              />
+              <Moon className="h-4 w-4 text-muted-foreground" />
+            </div>
+          </div>
+
           <div className="text-center">
             <Button
               variant="default"
