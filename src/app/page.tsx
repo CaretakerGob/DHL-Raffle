@@ -57,7 +57,13 @@ import {
   loadRaffleContextFromFirestore,
   saveRaffleContextToFirestore,
 } from "@/lib/raffle-firestore";
-import { ensureFirebaseAuth } from "@/lib/firebase-auth";
+import {
+  sendPasswordReset,
+  signInWithEmail,
+  signOutFromFirebase,
+  signUpWithEmail,
+  subscribeToAuthState,
+} from "@/lib/firebase-auth";
 import {
   Cloud,
   Clock3,
@@ -118,11 +124,29 @@ export default function RafflePage() {
   const [confirmationMessage, setConfirmationMessage] = _React.useState<string>("");
   const [isDarkMode, setIsDarkMode] = _React.useState<boolean>(false);
   const [storageMode, setStorageMode] = _React.useState<"checking" | "firebase" | "local">("checking");
+  const [authReady, setAuthReady] = _React.useState<boolean>(false);
+  const [authUserEmail, setAuthUserEmail] = _React.useState<string | null>(null);
+  const [emailInput, setEmailInput] = _React.useState<string>("");
+  const [passwordInput, setPasswordInput] = _React.useState<string>("");
+  const [isSignUpMode, setIsSignUpMode] = _React.useState<boolean>(false);
+  const [isAuthenticating, setIsAuthenticating] = _React.useState<boolean>(false);
+  const [authError, setAuthError] = _React.useState<string>("");
 
   const context = _React.useMemo<RaffleContext>(
     () => ({ locationId: DEFAULT_LOCATION_ID, shiftId: activeShiftId }),
     [activeShiftId]
   );
+
+  const isAuthRequired = canUseFirestore();
+
+  _React.useEffect(() => {
+    const unsubscribe = subscribeToAuthState((user) => {
+      setAuthUserEmail(user?.email ?? null);
+      setAuthReady(true);
+    });
+
+    return unsubscribe;
+  }, []);
 
   _React.useEffect(() => {
     if (typeof window === "undefined") return;
@@ -134,6 +158,19 @@ export default function RafflePage() {
       setStorageMode("checking");
 
       const firestoreEnabled = canUseFirestore();
+
+      if (firestoreEnabled && !authUserEmail) {
+        if (!isCancelled) {
+          setStorageMode("firebase");
+          setAllEmployees([]);
+          setRafflePool([]);
+          setWinnerHistory([]);
+          setWinner(null);
+          setPrizeName("");
+          setIsInitialLoadComplete(false);
+        }
+        return;
+      }
 
       if (!firestoreEnabled) {
         const localEmployees = loadEmployeesForContext(context);
@@ -155,11 +192,6 @@ export default function RafflePage() {
       }
 
       try {
-        const isAuthenticated = await ensureFirebaseAuth();
-        if (!isAuthenticated) {
-          throw new Error("Firebase Auth failed");
-        }
-
         const firestoreData = await loadRaffleContextFromFirestore(context);
         const initialEmployees =
           firestoreData && firestoreData.employees.length > 0
@@ -213,7 +245,7 @@ export default function RafflePage() {
     return () => {
       isCancelled = true;
     };
-  }, [context]);
+  }, [context, authUserEmail]);
 
   _React.useEffect(() => {
     if (typeof window === "undefined") return;
@@ -478,6 +510,68 @@ export default function RafflePage() {
     setPrizeName(selectedPrize);
   };
 
+  const handleAuthSubmit = async (event: _React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!emailInput.trim() || !passwordInput) {
+      setAuthError("Email and password are required.");
+      return;
+    }
+
+    setIsAuthenticating(true);
+    setAuthError("");
+
+    try {
+      if (isSignUpMode) {
+        await signUpWithEmail(emailInput.trim(), passwordInput);
+      } else {
+        await signInWithEmail(emailInput.trim(), passwordInput);
+      }
+
+      setPasswordInput("");
+      toast({
+        title: isSignUpMode ? "Account Created" : "Signed In",
+        description: "You can now use the raffle dashboard.",
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Authentication failed.";
+      setAuthError(message);
+    } finally {
+      setIsAuthenticating(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    await signOutFromFirebase();
+    toast({
+      title: "Signed Out",
+      description: "You have been signed out.",
+    });
+  };
+
+  const handleForgotPassword = async () => {
+    if (!emailInput.trim()) {
+      setAuthError("Enter your email first to reset your password.");
+      return;
+    }
+
+    setIsAuthenticating(true);
+    setAuthError("");
+
+    try {
+      await sendPasswordReset(emailInput.trim());
+      toast({
+        title: "Reset Email Sent",
+        description: "Check your inbox for password reset instructions.",
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to send reset email.";
+      setAuthError(message);
+    } finally {
+      setIsAuthenticating(false);
+    }
+  };
+
   return (
     <div className="relative min-h-screen text-foreground">
       <Confetti active={showConfetti} count={150} />
@@ -503,6 +597,74 @@ export default function RafflePage() {
       <div className="relative z-10 flex flex-col items-center px-4 pb-16 sm:pb-24 pt-8 sm:pt-10">
 
         <main className="w-full max-w-xl space-y-6 sm:space-y-8">
+          {isAuthRequired && !authReady ? (
+            <Card className="shadow-lg bg-card/90 backdrop-blur-md border border-white/20">
+              <CardContent className="pt-6 text-center text-muted-foreground">
+                Checking authentication session...
+              </CardContent>
+            </Card>
+          ) : isAuthRequired && !authUserEmail ? (
+            <Card className="shadow-lg bg-card/90 backdrop-blur-md border border-white/20">
+              <CardHeader>
+                <CardTitle className="text-center text-xl sm:text-2xl">Email Login</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form className="space-y-3" onSubmit={handleAuthSubmit}>
+                  <Input
+                    type="email"
+                    placeholder="you@company.com"
+                    value={emailInput}
+                    onChange={(event) => setEmailInput(event.target.value)}
+                    autoComplete="email"
+                    required
+                  />
+                  <Input
+                    type="password"
+                    placeholder="Password"
+                    value={passwordInput}
+                    onChange={(event) => setPasswordInput(event.target.value)}
+                    autoComplete={isSignUpMode ? "new-password" : "current-password"}
+                    required
+                  />
+
+                  {authError ? (
+                    <p className="text-sm text-destructive">{authError}</p>
+                  ) : null}
+
+                  <Button type="submit" className="w-full" disabled={isAuthenticating}>
+                    {isAuthenticating
+                      ? "Please wait..."
+                      : isSignUpMode
+                        ? "Create Account"
+                        : "Sign In"}
+                  </Button>
+                </form>
+
+                <Button
+                  variant="ghost"
+                  className="mt-2 w-full"
+                  onClick={() => {
+                    setIsSignUpMode((previous) => !previous);
+                    setAuthError("");
+                  }}
+                >
+                  {isSignUpMode ? "Have an account? Sign in" : "Need an account? Create one"}
+                </Button>
+
+                {!isSignUpMode ? (
+                  <Button
+                    variant="ghost"
+                    className="mt-1 w-full"
+                    onClick={handleForgotPassword}
+                    disabled={isAuthenticating}
+                  >
+                    Forgot password?
+                  </Button>
+                ) : null}
+              </CardContent>
+            </Card>
+          ) : (
+            <>
           <Card className="shadow-lg bg-card/90 backdrop-blur-md border border-white/20">
             <CardContent className="pt-5 space-y-4">
               <div className="flex items-center justify-between gap-3">
@@ -521,6 +683,15 @@ export default function RafflePage() {
                 )}
                 {storageMode === "checking" && <Badge variant="outline">Checking...</Badge>}
               </div>
+
+              {authUserEmail ? (
+                <div className="flex items-center justify-between gap-2 rounded-lg border border-white/20 bg-card/80 px-3 py-2">
+                  <p className="text-xs text-muted-foreground truncate">Signed in as: {authUserEmail}</p>
+                  <Button variant="outline" size="sm" onClick={handleSignOut}>
+                    Log out
+                  </Button>
+                </div>
+              ) : null}
 
               <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-end">
                 <div>
@@ -677,7 +848,7 @@ export default function RafflePage() {
                   Congratulations!
                   {prizeName && winner && (
                     <span className="block mt-2 text-lg">
-                      You've won: <span className="font-semibold text-accent">{prizeName}</span>!
+                      You have won: <span className="font-semibold text-accent">{prizeName}</span>!
                     </span>
                   )}
                 </DialogDescription>
@@ -744,6 +915,8 @@ export default function RafflePage() {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
+            </>
+          )}
         </main>
 
         <footer className="mt-10 sm:mt-16 text-center text-sm text-muted-foreground bg-card/90 backdrop-blur-md p-3 rounded-lg shadow-md border border-white/20">
