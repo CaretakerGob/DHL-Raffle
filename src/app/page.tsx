@@ -496,7 +496,7 @@ export default function RafflePage() {
               width={350}
               height={100}
               priority
-              style={{ width: "auto", height: "auto" }}
+              className="h-auto w-[350px] lg:w-[175px]"
             />
           </div>
         </header>
