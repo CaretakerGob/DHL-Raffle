@@ -36,8 +36,34 @@ jobs:
             exit 1
           fi
 
+      - name: Validate repository identity
+        run: |
+          if [ "$GITHUB_REPOSITORY" != "CaretakerGob/DHL-Raffle-git" ]; then
+            echo "This workflow must run from CaretakerGob/DHL-Raffle-git."
+            echo "Current repository: $GITHUB_REPOSITORY"
+            exit 1
+          fi
+
       - name: Deploy Firestore rules and indexes
         run: firebase deploy --project "$FIREBASE_PROJECT_ID" --only firestore:rules,firestore:indexes --non-interactive
+
+      - name: Validate App Hosting build root
+        if: ${{ vars.FIREBASE_APP_HOSTING_BACKEND_ID != '' }}
+        run: |
+          if [ -f "package.json" ]; then
+            echo "App root detected at repository root (package.json found)."
+            exit 0
+          fi
+
+          if [ -f "DHL-Raffle-git/package.json" ]; then
+            echo "App root detected at DHL-Raffle-git/package.json (monorepo layout)."
+            exit 0
+          fi
+
+          echo "Unable to find app package.json for App Hosting deploy."
+          echo "Expected either ./package.json or ./DHL-Raffle-git/package.json."
+          echo "Set Firebase App Hosting backend root directory to DHL-Raffle-git if using monorepo."
+          exit 1
 
       - name: Deploy Firebase App Hosting backend (optional)
         if: ${{ vars.FIREBASE_APP_HOSTING_BACKEND_ID != '' }}

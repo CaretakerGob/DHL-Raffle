@@ -4,6 +4,10 @@ This is a NextJS starter in Firebase Studio.
 
 To get started, take a look at src/app/page.tsx.
 
+## Deploying
+
+Before committing or deploying, follow the repository scoping rules in `DEPLOYING.md`.
+
 ## Firebase storage setup
 
 The raffle app now supports Firestore storage for shared data across devices.
