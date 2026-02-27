@@ -38,8 +38,8 @@ jobs:
 
       - name: Validate repository identity
         run: |
-          if [ "$GITHUB_REPOSITORY" != "CaretakerGob/DHL-Raffle-git" ]; then
-            echo "This workflow must run from CaretakerGob/DHL-Raffle-git."
+          if [ "$GITHUB_REPOSITORY" != "CaretakerGob/DHL-Raffle" ]; then
+            echo "This workflow must run from CaretakerGob/DHL-Raffle."
             echo "Current repository: $GITHUB_REPOSITORY"
             exit 1
           fi

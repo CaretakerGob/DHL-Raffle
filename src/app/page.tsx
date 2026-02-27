@@ -487,9 +487,8 @@ export default function RafflePage() {
       />
       <div className="absolute inset-0 bg-background/50" />
 
-      <div className="relative z-10 flex flex-col items-center py-16 sm:py-24 px-4">
-        <header className="mb-6 sm:mb-8 flex flex-col items-center">
-          <div className="bg-primary py-2 px-3 rounded-lg shadow-xl border border-white/20 flex flex-col items-center">
+      <header className="relative z-20 w-full flex justify-center px-4 pt-4 sm:pt-6">
+        <div className="bg-primary py-2 px-3 rounded-lg shadow-xl border border-white/20 flex flex-col items-center">
             <Image
               src="/DHL-raffle-Logo.png"
               alt="DHL Raffle Logo"
@@ -498,8 +497,10 @@ export default function RafflePage() {
               priority
               className="h-auto w-[350px] lg:w-[175px]"
             />
-          </div>
-        </header>
+        </div>
+      </header>
+
+      <div className="relative z-10 flex flex-col items-center px-4 pb-16 sm:pb-24 pt-8 sm:pt-10">
 
         <main className="w-full max-w-xl space-y-6 sm:space-y-8">
           <Card className="shadow-lg bg-card/90 backdrop-blur-md border border-white/20">
