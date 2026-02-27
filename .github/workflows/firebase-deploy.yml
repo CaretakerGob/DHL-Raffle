@@ -55,14 +55,14 @@ jobs:
             exit 0
           fi
 
-          if [ -f "DHL-Raffle-git/package.json" ]; then
-            echo "App root detected at DHL-Raffle-git/package.json (monorepo layout)."
+          if [ -f "DHL-Raffle/package.json" ]; then
+            echo "App root detected at DHL-Raffle/package.json (monorepo layout)."
             exit 0
           fi
 
           echo "Unable to find app package.json for App Hosting deploy."
-          echo "Expected either ./package.json or ./DHL-Raffle-git/package.json."
-          echo "Set Firebase App Hosting backend root directory to DHL-Raffle-git if using monorepo."
+          echo "Expected either ./package.json or ./DHL-Raffle/package.json."
+          echo "Set Firebase App Hosting backend root directory to DHL-Raffle if using monorepo."
           exit 1
 
       - name: Deploy Firebase App Hosting backend (optional)

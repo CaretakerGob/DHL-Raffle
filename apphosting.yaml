@@ -3,7 +3,7 @@
 
 env:
   - variable: GOOGLE_BUILDABLE
-    value: DHL-Raffle-git
+    value: DHL-Raffle
     availability:
       - BUILD
 
